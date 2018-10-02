@@ -1,2 +1,2 @@
 which contains info but also more info
-and a new line
+it knows that this is incorrect
