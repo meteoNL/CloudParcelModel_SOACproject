@@ -65,17 +65,17 @@ for t in t1:
 pl.plot(data[2,:],data[0,:],color='b')
 pl.ylabel('height (m)')
 pl.xlabel('time (s)')
-pl.title('Brunt-VÃ¤isÃ¤lÃ¤ frequency')
+pl.title('B-V frequency')
 pl.legend()
 pl.grid()
 
 vel=data[1,:]
 maxvel=np.max(vel)
-print('maximum velocity = %s m/s' % round((maxvel),0))
-for i in range(len(vel)):
-    if vel[i]==maxvel:
-        j=i
-        print('location of maximum velocity = %s m' % int(data[0,j]+0.5))
+#print('maximum velocity = %s m/s' % round((maxvel),0))
+#for i in range(len(vel)):
+ #   if vel[i]==maxvel:
+  #      j=i
+   #     print('location of maximum velocity = %s m' % int(data[0,j]+0.5))
         
 height=data[0,:]
 maxheight=np.max(height)
