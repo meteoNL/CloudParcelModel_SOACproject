@@ -12,12 +12,12 @@ import matplotlib.pyplot as pl
 tend=3600. #end of the simulation 
 dt=0.5 #time step
 gamma=0.5 #induced relation with environmental air, inertial
-mu=5e-4 #entrainment of air
+mu=2e-4 #entrainment of air
 
-Tp=308. #initial temp air parcel, K
-zp=170. #initial height air parcel, m
+Tp=288.5 #initial temp air parcel, K
+zp=1500. #initial height air parcel, m
 w=0. #initial velocity air parcel, m/s
-wvp=15.0/1000. #mixing ratio of water vapor kg/kg
+wvp=10.9/1000. #mixing ratio of water vapor kg/kg
 
 g=9.81 #gravitational acceleration
 cp=1005. #specific heat per kilogram of air
@@ -43,7 +43,7 @@ Tenvarr=np.array([])
 wvenvarr=np.array([])
 #%%
 #read some environmental data, for now 28th of June 2011, Essen (Germany), 12 UTC
-f=open('dataset.txt','r')
+f=open('20090526_00z_De_Bilt.txt','r')
 i=0
 for line in f:
     line=line.split(';')
@@ -64,11 +64,11 @@ f.close()
 def dwdt(Tp,Tenv):
     return 1/(1+gamma)*(g*(Tp-Tenv)/Tenv-mu*abs(w)*w)
 
-def dTpdt(w,Tp,zp):
-    return -(g*w/cp+mu*abs(w)*(Tp-Tenv(zp)))
+def dTpdt(w,Tp,zp,cond):
+    return -(g*w/cp+mu*abs(w)*(Tp-Tenv(zp)))+Lv/cp*cond
 
-def dwvdt(w,wvp,wvenv):
-    return -mu*(wvp-wvenv)*abs(w)
+def dwvdt(w,wvp,wvenv,cond):
+    return -mu*(wvp-wvenv)*abs(w)-cond
 
 def dpdt(rho,w):
     return (-rho*g*w)
@@ -116,6 +116,12 @@ def wvscalc(T,p):
     ws=epsilon*(es/(p-es))
     return ws
 
+def condensation(wv,wvs):
+    if wv > wvs:
+        return wv-wvs
+    else:
+        return 0.00
+
 #initialize water vapor saturation mixing ratio
 wvs_old=wvscalc(Tp,pp)
 for t in t1:
@@ -137,13 +143,14 @@ for t in t1:
     sat_arr=np.append(sat_arr,saturation)
     wvenvarr=np.append(wvenvarr,wvenv_new)
     Tenvarr=np.append(Tenvarr,Tenv_new)
+    cond=condensation(wv_old,wvs_old)
     
     #do the differential equations
     pp=pp+dpdt(rho_old,w_old)*dt
     w=w+dwdt(Tp,Tenv_new)*dt
     zp=zp+w_old*dt
-    Tp=Tp+dTpdt(w_old,Tp_old,zp_old)*dt
-    wvp=wvp+dwvdt(w_old,wv_old,wvenv_new)*dt  
+    Tp=Tp+dTpdt(w_old,Tp_old,zp_old,cond)*dt
+    wvp=wvp+dwvdt(w_old,wv_old,wvenv_new,cond)*dt  
     
     #add data to array
     zp_arr = np.append(zp_arr,zp)
@@ -171,10 +178,13 @@ sat_arr=np.append(sat_arr,saturation)
 wvenvarr=np.append(wvenvarr,wvenv_new)
 Tenvarr=np.append(Tenvarr,Tenv_new)
 
-#pl.plot(Tp_arr,zp_arr)
-#pl.plot(Tenvarr,zp_arr)
-pl.plot(sat_arr)
-
+pl.plot(Tp_arr,zp_arr)
+pl.plot(Tenvarr,zp_arr)
+pl.ylim(0,14000)
+pl.show()
+pl.plot(t1,sat_arr[:-1])
+pl.show()
+pl.plot(t1,zp_arr[:-1])
     
 
 
