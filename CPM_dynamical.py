@@ -11,7 +11,9 @@ g=9.81
 cp=1005
 tend=7200.
 dt=0.1
-t1=np.linspace(1,tend,(tend/dt)) #change
+
+t1=np.linspace(1,tend,(tend/dt)) 
+t2 = []
 
 Tp=305 #temp air parcel, K
 zp=5
