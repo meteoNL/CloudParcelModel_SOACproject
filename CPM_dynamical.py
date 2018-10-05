@@ -13,7 +13,6 @@ tend=7200.
 dt=0.1
 
 t1=np.linspace(1,tend,(tend/dt)) 
-t2=[]
 
 Tp=305 #temp air parcel, K
 zp=5
