@@ -54,7 +54,7 @@ def wnew(thetap,z,w):
 def znew(thetap,z,w):
     return z+wnew(thetap,z,w)*dt
 
-for t in t1:
+for t in t1: #Semi-implicit Euler method
     w=wnew(thetap,z,w)
     z=znew(thetap,z,w)
  #   print(w,z,t)   
