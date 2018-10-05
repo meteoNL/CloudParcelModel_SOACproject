@@ -33,7 +33,7 @@ for line in f:
     data_env=np.append(data_env,np.array([z,T]))
     i+=1
 data_env=np.reshape(data_env,(int(len(data_env)/2.0),2))
-
+f.close()
 def dwdt(Tp,Tenv):
     return 1/(1+gamma)*(g*(Tp-Tenv)/Tenv-mu*abs(w)*w)
 
