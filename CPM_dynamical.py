@@ -33,7 +33,14 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 
 #some arrays for data in the environment and in the parcel
 data_env=np.array([])
-data_p=np.array([])
+sat_arr=np.array([])
+zp_arr = np.array([zp])
+Tp_arr = np.array([Tp])
+w_arr = np.array([w])
+wvp_arr = np.array([wvp])
+pp_arr = np.array([])
+Tenvarr=np.array([])
+wvenvarr=np.array([])
 #%%
 #read some environmental data, for now 28th of June 2011, Essen (Germany), 12 UTC
 f=open('dataset.txt','r')
@@ -48,7 +55,7 @@ for line in f:
     i+=1
 
 pp=float(data_env[3])  #initial pressure condition (of the environmental air)
-    
+pp_arr=np.append(pp_arr,pp)
 #reshape data enviromental air to matrix and close file 
 data_env=np.reshape(data_env,(int(len(data_env)/4.0),4))
 f.close()
@@ -111,7 +118,6 @@ def wvscalc(T,p):
 
 #initialize water vapor saturation mixing ratio
 wvs_old=wvscalc(Tp,pp)
-
 for t in t1:
     #calculate environmental values of water vapor and temperature
     Tenv_new=Tenv(zp)
@@ -123,41 +129,52 @@ for t in t1:
     Tp_old=Tp
     wv_old=wvp
     
-    #do the gass law and hydrostatic equilibrium to calculate pressure
-    Tv_old=Tp_old*(1+(wv_old)/epsilon)/(1+wv_old) #Aarnouts lecture notes
-    rho_old=pp/(Rd*Tv_old) #gas law
-    pp_old=pp
-    wvs=wvs_old
-    wvs_old=wvscalc(Tp_old,pp_old)
+    #do the gass law and hydrostatic equilibrium to calculate pressure and saturation
+    Tv=Tp_old*(1+(wv_old)/epsilon)/(1+wv_old) #Aarnouts lecture notes
+    rho_old=pp/(Rd*Tv) #gas law
+    wvs_old=wvscalc(Tp_old,pp)
     saturation=wv_old/wvs_old
+    sat_arr=np.append(sat_arr,saturation)
+    wvenvarr=np.append(wvenvarr,wvenv_new)
+    Tenvarr=np.append(Tenvarr,Tenv_new)
     
     #do the differential equations
     pp=pp+dpdt(rho_old,w_old)*dt
     w=w+dwdt(Tp,Tenv_new)*dt
     zp=zp+w_old*dt
     Tp=Tp+dTpdt(w_old,Tp_old,zp_old)*dt
-    wvp=wvp+dwvdt(w_old,wv_old,wvenv_new)*dt
-    data_p=np.append(data_p,np.array([zp,Tp,w,wvp,Tenv_new,wvenv_new,saturation,pp]))
+    wvp=wvp+dwvdt(w_old,wv_old,wvenv_new)*dt  
+    
+    #add data to array
+    zp_arr = np.append(zp_arr,zp)
+    Tp_arr = np.append(Tp_arr,Tp)
+    w_arr=np.append(w_arr,w)
+    wvp_arr=np.append(wvp_arr,wvp)
+    pp_arr=np.append(pp_arr,pp)
 
-data_p=np.reshape(data_p,(int(len(data_p)/8.0),8))
-pl.plot(data_p[:,4],data_p[:,0])
-pl.plot(data_p[:,1],data_p[:,0])
-pl.ylim(0,1.1*np.max(data_p[:,0]))
-pl.show()
+#calculate environmental values of water vapor and temperature
+Tenv_new=Tenv(zp)
+wvenv_new=wvenv(zp)
 
-pl.plot(data_p[:,5],data_p[:,0])
-pl.plot(data_p[:,3],data_p[:,0])
+#save the old values first
+w_old=w
+zp_old=zp
+Tp_old=Tp
+wv_old=wvp
 
-data=np.zeros((3,len(t1)+1))
+#do the gass law and hydrostatic equilibrium to calculate pressure and saturation
+Tv=Tp_old*(1+(wv_old)/epsilon)/(1+wv_old) #Aarnouts lecture notes
+rho_old=pp/(Rd*Tv) #gas law
+wvs_old=wvscalc(Tp_old,pp)
+saturation=wv_old/wvs_old
+sat_arr=np.append(sat_arr,saturation)
+wvenvarr=np.append(wvenvarr,wvenv_new)
+Tenvarr=np.append(Tenvarr,Tenv_new)
 
+#pl.plot(Tp_arr,zp_arr)
+#pl.plot(Tenvarr,zp_arr)
+pl.plot(sat_arr)
 
-for t in t1:
-#    w=wnew(thetap,z,w)
- #   z=znew(thetap,z,w)
- #   print(w,z,t)   
-    data[0,int(t/dt)]=z
-    data[1,int(t/dt)]=w
-    data[2,int(t/dt)]=t
     
 
 
