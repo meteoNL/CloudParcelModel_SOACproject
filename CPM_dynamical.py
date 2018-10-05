@@ -9,13 +9,15 @@ import numpy as np
 import matplotlib.pyplot as pl
 g=9.81
 cp=1005
-tend=7200.
-dt=0.1
+tend=3600.
+dt=0.5
+gamma=0.0
+mu=3e-4
 
-t1=np.linspace(1,tend,(tend/dt)) 
+t1=np.linspace(0,tend,(tend/dt)) 
 
-Tp=305 #temp air parcel, K
-zp=5
+Tp=307 #temp air parcel, K
+zp=100
 w=0
 
 data_env=np.array([])
@@ -33,13 +35,17 @@ for line in f:
 data_env=np.reshape(data_env,(int(len(data_env)/2.0),2))
 
 def dwdt(Tp,Tenv):
-    return g*(Tp-Tenv)/Tenv
+    return 1/(1+gamma)*(g*(Tp-Tenv)/Tenv-mu*abs(w)*w)
 
-def dTpdt(w):
-    return -g*w/cp
+def dTpdt(w,Tp,zp):
+    return -(g*w/cp+mu*abs(w)*(Tp-Tenv(zp)))
 
 def Tenv(z):
     j=0
+    if data_env[j,0] == z or data_env[j,0] > z: #to prevent it from leaving domain
+        T=data_env[0,1]
+    if data_env[-1,0] < z: #to prevent it from leaving the domain
+        T=300
     while data_env[j,0] < z:
         Tenv_plus1=data_env[(j+1),1]
         Tenv_0=data_env[j,1]
@@ -49,17 +55,21 @@ def Tenv(z):
         T=Tenv_0+(z-zenv_0)*dTdz
         j+=1
     return T
-
+print(zp)
 for t in t1:
     Tenv_new=Tenv(zp)
-    w=w+dwdt(Tp,Tenv_new)
-    zp=zp+w*dt
-    Tp=Tp+dTpdt(w)
+    w_old=w
+    zp_old=zp
+    Tp_old=Tp
+    w=w+dwdt(Tp,Tenv_new)*dt
+    zp=zp+w_old*dt
+    Tp=Tp+dTpdt(w_old,Tp_old,zp_old)*dt
     data_p=np.append(data_p,np.array([zp,Tp,w]))
 
 data_p=np.reshape(data_p,(int(len(data_p)/3.0),3))
 pl.plot(data_env[:,1],data_env[:,0])
 pl.plot(data_p[:,1],data_p[:,0])
+pl.ylim(0,1.1*np.max(data_p[:,0]))
 pl.show()
 
 data=np.zeros((3,len(t1)+1))
