@@ -28,8 +28,8 @@ Rd=287.05 #gass constant dry air
 Lv=2.5e6 #latent heat of vaporization water
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
-tau_cond = 30 #time scale for condensation
-tau_evap = 10*60 #time scale for evaporation
+tau_cond = 30. #time scale for condensation
+tau_evap = 10.*60. #time scale for evaporation
 #our time space
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 
