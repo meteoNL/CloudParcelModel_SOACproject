@@ -10,7 +10,7 @@ import matplotlib.pyplot as pl
 
 #constants set for this simulation and initial conditions
 tend=3600. #end of the simulation 
-dt=0.5 #time step
+dt=1. #time step
 gamma=0.5 #induced relation with environmental air, inertial
 mu=2e-4 #entrainment of air
 
@@ -73,14 +73,28 @@ def dwvdt(w,wvp,wvenv,cond):
 def dpdt(rho,w):
     return (-rho*g*w)
 
+def func(phi,cond,rho,Tenv,wvenv,t):
+    pp=phi[0]
+    w=phi[1]
+    zp=phi[2]
+    Tp=phi[3]
+    wvp=phi[4]
+    dp=dpdt(rho,w)*dt
+    dw=dwdt(Tp,Tenv)*dt
+    dzp=w*dt
+    dTp=dTpdt(w,Tp,zp,cond)*dt
+    dwvp=dwvdt(w,wvp,wvenv,cond)*dt
+    phi=np.array([dp,dw,dzp,dTp,dwvp])
+    return phi
+
 #interpolated temperature and water vapor profiles, linear interpolation y=a*x+b where a = d/dz of the respective variable and b is the reference value that was measured
 def Tenv(z):
     j=0
     if data_env[j,0] == z or data_env[j,0] > z: #to prevent it from leaving domain
         T=data_env[0,1]
-    elif data_env[-1,0] < z: #to prevent it from leaving the domain
+    elif data_env[-2,0] < z: #to prevent it from leaving the domain
         T=300
-    while data_env[j,0] < z:
+    while data_env[(j+1),0] < z:
         Tenv_plus1=data_env[(j+1),1] #next value
         Tenv_0=data_env[j,1] #reference value
         zenv_plus1=data_env[(j+1),0] #next height value
@@ -144,11 +158,19 @@ for t in t1:
     cond=condensation(wv_old,wvs_old)
     
     #do the differential equations
-    pp=pp+dpdt(rho_old,w_old)*dt
-    w=w+dwdt(Tp,Tenv_new)*dt
-    zp=zp+w_old*dt
-    Tp=Tp+dTpdt(w_old,Tp_old,zp_old,cond)*dt
-    wvp=wvp+dwvdt(w_old,wv_old,wvenv_new,cond)*dt  
+    phi=np.array([pp,w,zp,Tp,wvp])
+    k1,k2,k3,k4=np.zeros(5),np.zeros(5),np.zeros(5),np.zeros(5)
+    k1[:]=func(phi,cond,rho_old,Tenv_new,wvenv_new,t)
+    k2[:]=func((phi+0.5*k1),cond,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
+    k3[:]=func((phi+0.5*k2),cond,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
+    k4[:]=func((phi+k3),cond,rho_old,Tenv_new,wvenv_new,(t+dt))
+    #update values and save them in resulting array that includes time
+    phi=phi+np.array((1./6)*(k1+2*k2+2*k3+k4),dtype='float64')
+    pp=phi[0]
+    w=phi[1]
+    zp=phi[2]
+    Tp=phi[3]
+    wvp=phi[4]  
     
     #add data to array
     zp_arr = np.append(zp_arr,zp)
