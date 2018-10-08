@@ -18,6 +18,7 @@ Tp=288.5 #initial temp air parcel, K
 zp=1500. #initial height air parcel, m
 w=0. #initial velocity air parcel, m/s
 wvp=10.9/1000. #mixing ratio of water vapor kg/kg
+wL = 0. #initial condition for cloud content
 
 g=9.81 #gravitational acceleration
 cp=1005. #specific heat per kilogram of air
@@ -27,7 +28,8 @@ Rd=287.05 #gass constant dry air
 Lv=2.5e6 #latent heat of vaporization water
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
-tau = 10
+tau_cond = 30 #time scale for condensation
+tau_evap = 10*60 #time scale for evaporation
 #our time space
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 
@@ -41,6 +43,7 @@ wvp_arr = np.array([wvp])
 pp_arr = np.array([])
 Tenvarr=np.array([])
 wvenvarr=np.array([])
+wL_arr=np.array([])
 #%%
 #read some environmental data, for now 28th of June 2011, Essen (Germany), 12 UTC
 f=open('20090526_00z_De_Bilt.txt','r')
@@ -61,31 +64,37 @@ data_env=np.reshape(data_env,(int(len(data_env)/4.0),4))
 f.close()
 #%%
 #differential equations
-def dwdt(Tp,Tenv):
-    return 1/(1+gamma)*(g*(Tp-Tenv)/Tenv-mu*abs(w)*w)
+def dwdt(Tp,Tenv,wL):
+    return 1/(1+gamma)*(g*((Tp-Tenv)/Tenv-wL)-mu*abs(w)*w)
 
-def dTpdt(w,Tp,zp,cond):
-    return -(g*w/cp+mu*abs(w)*(Tp-Tenv(zp)))+Lv/cp*cond
+def dTpdt(w,Tp,zp,cond,evap):
+    return -(g*w/cp+mu*abs(w)*(Tp-Tenv(zp)))+Lv/cp*(cond-evap)
 
-def dwvdt(w,wvp,wvenv,cond):
-    return -mu*(wvp-wvenv)*abs(w)-cond
+def dwvdt(w,wvp,wvenv,cond,evap):
+    return -mu*(wvp-wvenv)*abs(w)-(cond-evap)
 
 def dpdt(rho,w):
     return (-rho*g*w)
 
-def func(phi,cond,rho,Tenv,wvenv,t):
+def dwLdt(w,wL,cond,evap):
+    return cond-evap-mu*wL*abs(w)
+
+def func(phi,cond,evap,rho,Tenv,wvenv,t):
     pp=phi[0]
     w=phi[1]
     zp=phi[2]
     Tp=phi[3]
     wvp=phi[4]
+    wL=phi[5]
     dp=dpdt(rho,w)*dt
-    dw=dwdt(Tp,Tenv)*dt
+    dw=dwdt(Tp,Tenv,wL)*dt
     dzp=w*dt
-    dTp=dTpdt(w,Tp,zp,cond)*dt
-    dwvp=dwvdt(w,wvp,wvenv,cond)*dt
-    phi=np.array([dp,dw,dzp,dTp,dwvp])
+    dTp=dTpdt(w,Tp,zp,cond,evap)*dt
+    dwvp=dwvdt(w,wvp,wvenv,cond,evap)*dt
+    dwL=dwLdt(w,wL,cond,evap)*dt
+    phi=np.array([dp,dw,dzp,dTp,dwvp,dwL])
     return phi
+
 
 #interpolated temperature and water vapor profiles, linear interpolation y=a*x+b where a = d/dz of the respective variable and b is the reference value that was measured
 def Tenv(z):
@@ -132,7 +141,13 @@ def wvscalc(T,p):
 
 def condensation(wv,wvs):
     if wv > wvs:
-        return (wv-wvs)*(1-np.exp(-1/tau*dt))
+        return (wv-wvs)*(1-np.exp(-1/tau_cond*dt))
+    else:
+        return 0.00
+
+def evaporation(wv,wvs,wL):
+    if wv > wvs and wL>0:
+        return wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))
     else:
         return 0.00
 
@@ -146,6 +161,7 @@ for t in t1:
     zp_old=zp
     Tp_old=Tp
     wv_old=wvp
+    wL_old=wL
     
     #do the gass law and hydrostatic equilibrium to calculate pressure and saturation
     Tv=Tp_old*(1+(wv_old)/epsilon)/(1+wv_old) #Aarnouts lecture notes
@@ -156,14 +172,14 @@ for t in t1:
     wvenvarr=np.append(wvenvarr,wvenv_new)
     Tenvarr=np.append(Tenvarr,Tenv_new)
     cond=condensation(wv_old,wvs_old)
-    
+    evap=evaporation(wv_old,wvs_old,wL)
     #do the differential equations
-    phi=np.array([pp,w,zp,Tp,wvp])
-    k1,k2,k3,k4=np.zeros(5),np.zeros(5),np.zeros(5),np.zeros(5)
-    k1[:]=func(phi,cond,rho_old,Tenv_new,wvenv_new,t)
-    k2[:]=func((phi+0.5*k1),cond,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
-    k3[:]=func((phi+0.5*k2),cond,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
-    k4[:]=func((phi+k3),cond,rho_old,Tenv_new,wvenv_new,(t+dt))
+    phi=np.array([pp,w,zp,Tp,wvp,wL])
+    k1,k2,k3,k4=np.zeros(6),np.zeros(6),np.zeros(6),np.zeros(6)
+    k1[:]=func(phi,cond,evap,rho_old,Tenv_new,wvenv_new,t)
+    k2[:]=func((phi+0.5*k1),cond,evap,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
+    k3[:]=func((phi+0.5*k2),cond,evap,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
+    k4[:]=func((phi+k3),cond,evap,rho_old,Tenv_new,wvenv_new,(t+dt))
     #update values and save them in resulting array that includes time
     phi=phi+np.array((1./6)*(k1+2*k2+2*k3+k4),dtype='float64')
     pp=phi[0]
@@ -171,13 +187,14 @@ for t in t1:
     zp=phi[2]
     Tp=phi[3]
     wvp=phi[4]  
-    
+    wL=phi[5]
     #add data to array
     zp_arr = np.append(zp_arr,zp)
     Tp_arr = np.append(Tp_arr,Tp)
     w_arr=np.append(w_arr,w)
     wvp_arr=np.append(wvp_arr,wvp)
     pp_arr=np.append(pp_arr,pp)
+    wL_arr=np.append(wL_arr,wL)
 
 #calculate environmental values of water vapor and temperature
 Tenv_new=Tenv(zp)
@@ -188,6 +205,7 @@ w_old=w
 zp_old=zp
 Tp_old=Tp
 wv_old=wvp
+wL_old=wL
 
 #do the gass law and hydrostatic equilibrium to calculate pressure and saturation
 Tv=Tp_old*(1+(wv_old)/epsilon)/(1+wv_old) #Aarnouts lecture notes
@@ -197,7 +215,8 @@ saturation=wv_old/wvs_old
 sat_arr=np.append(sat_arr,saturation)
 wvenvarr=np.append(wvenvarr,wvenv_new)
 Tenvarr=np.append(Tenvarr,Tenv_new)
-
+wL_arr=np.append(wL_arr,wL)
+ 
 pl.plot(Tp_arr,zp_arr)
 pl.plot(Tenvarr,zp_arr)
 pl.ylim(0,14000)
