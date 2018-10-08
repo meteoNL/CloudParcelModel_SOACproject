@@ -9,7 +9,7 @@ import numpy as np
 import matplotlib.pyplot as pl
 
 #constants set for this simulation and initial conditions
-tend=3600. #end of the simulation 
+tend=7200. #end of the simulation 
 dt=1. #time step
 gamma=0.5 #induced relation with environmental air, inertial
 mu=2e-4 #entrainment of air
@@ -28,8 +28,11 @@ Rd=287.05 #gass constant dry air
 Lv=2.5e6 #latent heat of vaporization water
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
-tau_cond = 30 #time scale for condensation
-tau_evap = 10*60 #time scale for evaporation
+tau_cond = 30. #time scale for condensation
+tau_evap = 10.*60 #time scale for evaporation
+tau_warmpc = 20.*60 #time scale for the formation of warm precipitation
+C_evap=1400.
+
 #our time space
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 
@@ -44,6 +47,8 @@ pp_arr = np.array([])
 Tenvarr=np.array([])
 wvenvarr=np.array([])
 wL_arr=np.array([])
+total_prec=np.array([0.])
+
 #%%
 #read some environmental data, for now 28th of June 2011, Essen (Germany), 12 UTC
 f=open('20090526_00z_De_Bilt.txt','r')
@@ -76,11 +81,10 @@ def dwvdt(w,wvp,wvenv,cond,evap):
 def dpdt(rho,w):
     return (-rho*g*w)
 
-def dwLdt(w,wL,cond,evap):
-    return cond-evap-mu*wL*abs(w)
+def dwLdt(w,wL,cond,evap,warm_precip):
+    return cond-evap-warm_precip-mu*wL*abs(w)
 
-def func(phi,cond,evap,rho,Tenv,wvenv,t):
-    pp=phi[0]
+def func(phi,cond,evap,warm_precip,rho,Tenv,wvenv,t):
     w=phi[1]
     zp=phi[2]
     Tp=phi[3]
@@ -91,7 +95,7 @@ def func(phi,cond,evap,rho,Tenv,wvenv,t):
     dzp=w*dt
     dTp=dTpdt(w,Tp,zp,cond,evap)*dt
     dwvp=dwvdt(w,wvp,wvenv,cond,evap)*dt
-    dwL=dwLdt(w,wL,cond,evap)*dt
+    dwL=dwLdt(w,wL,cond,evap,warm_precip)*dt
     phi=np.array([dp,dw,dzp,dTp,dwvp,dwL])
     return phi
 
@@ -146,10 +150,16 @@ def condensation(wv,wvs):
         return 0.00
 
 def evaporation(wv,wvs,wL):
-    if wv > wvs and wL>0:
-        return wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))
+    if wvs > wv and wL>0:
+        return C_evap*wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))
     else:
         return 0.00
+    
+def warm_precip(wL):
+    if wL > 0:
+        return wL*(1-np.exp(-dt/tau_warmpc))
+    else:
+        return 0.0
 
 for t in t1:
     #calculate environmental values of water vapor and temperature
@@ -164,6 +174,7 @@ for t in t1:
     wL_old=wL
     
     #do the gass law and hydrostatic equilibrium to calculate pressure and saturation
+    # !! HERE WE STILL USE EULER FORWARD, HOWEVER PRESSURE IS NOT AS IMPORTANT AS THE OTHERS BECAUSE IT IS ONLY APPROX. NEEDED FOR CONDENSATION !!
     Tv=Tp_old*(1+(wv_old)/epsilon)/(1+wv_old) #Aarnouts lecture notes
     rho_old=pp/(Rd*Tv) #gas law
     wvs_old=wvscalc(Tp_old,pp)
@@ -173,13 +184,16 @@ for t in t1:
     Tenvarr=np.append(Tenvarr,Tenv_new)
     cond=condensation(wv_old,wvs_old)
     evap=evaporation(wv_old,wvs_old,wL)
+    warm_prec=warm_precip(wL)
+
     #do the differential equations
     phi=np.array([pp,w,zp,Tp,wvp,wL])
     k1,k2,k3,k4=np.zeros(6),np.zeros(6),np.zeros(6),np.zeros(6)
-    k1[:]=func(phi,cond,evap,rho_old,Tenv_new,wvenv_new,t)
-    k2[:]=func((phi+0.5*k1),cond,evap,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
-    k3[:]=func((phi+0.5*k2),cond,evap,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
-    k4[:]=func((phi+k3),cond,evap,rho_old,Tenv_new,wvenv_new,(t+dt))
+    k1[:]=func(phi,cond,evap,warm_prec,rho_old,Tenv_new,wvenv_new,t)
+    k2[:]=func((phi+0.5*k1),cond,evap,warm_prec,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
+    k3[:]=func((phi+0.5*k2),cond,evap,warm_prec,rho_old,Tenv_new,wvenv_new,(t+0.5*dt))
+    k4[:]=func((phi+k3),cond,evap,warm_prec,rho_old,Tenv_new,wvenv_new,(t+dt))
+
     #update values and save them in resulting array that includes time
     phi=phi+np.array((1./6)*(k1+2*k2+2*k3+k4),dtype='float64')
     pp=phi[0]
@@ -188,6 +202,7 @@ for t in t1:
     Tp=phi[3]
     wvp=phi[4]  
     wL=phi[5]
+
     #add data to array
     zp_arr = np.append(zp_arr,zp)
     Tp_arr = np.append(Tp_arr,Tp)
@@ -195,6 +210,7 @@ for t in t1:
     wvp_arr=np.append(wvp_arr,wvp)
     pp_arr=np.append(pp_arr,pp)
     wL_arr=np.append(wL_arr,wL)
+    total_prec=np.append(total_prec,(total_prec[-1]+warm_prec))
 
 #calculate environmental values of water vapor and temperature
 Tenv_new=Tenv(zp)
@@ -224,7 +240,10 @@ pl.show()
 pl.plot(t1,sat_arr[:-1])
 pl.show()
 pl.plot(t1,zp_arr[:-1])
-    
+pl.ylim(0,14000)    
+pl.show()
 
+pl.plot(t1,total_prec[1:])
+pl.show()
 
 
