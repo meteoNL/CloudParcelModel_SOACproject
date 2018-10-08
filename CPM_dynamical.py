@@ -146,7 +146,7 @@ def condensation(wv,wvs):
         return 0.00
 
 def evaporation(wv,wvs,wL):
-    if wv > wvs and wL>0:
+    if wvs > wv and wL>0:
         return wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))
     else:
         return 0.00
