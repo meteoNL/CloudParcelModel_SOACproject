@@ -122,8 +122,6 @@ def condensation(wv,wvs):
     else:
         return 0.00
 
-#initialize water vapor saturation mixing ratio
-wvs_old=wvscalc(Tp,pp)
 for t in t1:
     #calculate environmental values of water vapor and temperature
     Tenv_new=Tenv(zp)
