@@ -27,7 +27,7 @@ Rd=287.05 #gass constant dry air
 Lv=2.5e6 #latent heat of vaporization water
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
-
+tau = 10
 #our time space
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 
@@ -132,7 +132,7 @@ def wvscalc(T,p):
 
 def condensation(wv,wvs):
     if wv > wvs:
-        return wv-wvs
+        return (wv-wvs)*(1-np.exp(-1/tau*dt))
     else:
         return 0.00
 
