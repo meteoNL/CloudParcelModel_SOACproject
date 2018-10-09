@@ -75,7 +75,12 @@ def Tenvcalc(h):
     elif i == len(z):
         Tenv = 300
     else:
-        dTdz=(T[i+1]-T[i-1])/(z[i+1]-z[i-1]) #gradient a
+        if h == z[i]:
+            Tenv = T[i]
+        elif h > z[i]:
+            dTdz=(T[i+1]-T[i])/(z[i+1]-z[i])
+        else:
+            dTdz=(T[i]-T[i-1])/(z[i]-z[i-1])  
         Tenv = T[i]+(h-z[i])*dTdz
     return Tenv
 def wvenvcalc(h):
@@ -85,7 +90,12 @@ def wvenvcalc(h):
      elif i == len(z):
         wvenv = 0
      else:
-        dwvdz = (wv[i+1]-wv[i-1])/(z[i+1]-z[i-1])
+        if h == z[i]:
+            wvenv = wv[i]
+        elif h > z[i]:
+            dwvdz=(wv[i+1]-wv[i])/(z[i+1]-z[i])
+        else:
+            dwvdz=(wv[i]-wv[i-1])/(z[i]-z[i-1])  
         wvenv = wv[i]+(h-z[i])*dwvdz
      return wvenv
 #%%
