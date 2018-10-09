@@ -2,7 +2,7 @@
 """
 Created on Fri Oct 05 08:12:20 2018
 
-@author: Edward chenxi
+@author: Edward and Chenxi
 """
 import numpy as np
 import matplotlib.pyplot as pl
@@ -67,7 +67,6 @@ def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx
-
 def Tenvcalc(h):
     i = find_nearest(z,h)
     if i == 0:
@@ -106,7 +105,7 @@ w[0] = 0. #initial velocity of parcel, m/s
 wvp[0] = 10.9/1000. #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
-p[0] = p_d[0]
+p[0] = 850e2
 #%%
 #differential equations
 def dwdt(w,Tp,Tenv,wL): 
