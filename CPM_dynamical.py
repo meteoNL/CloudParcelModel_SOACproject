@@ -14,6 +14,8 @@ T0=273.15 #zero Celsius Kelvin reference temperature
 Rv=461.5 #gas constant water vapor
 Rd=287.05 #gas constant dry air
 Lv=2.2647e6 #latent heat of vaporization water
+# As far as I believe Lv can change approx 10% as function of T (between 2.2 and 2.5 e+6), so we may implement that or search for T-dependence? 
+# Additional similar just to remember temporarily: (programming) why does wvscalc return wv? Should be called wvs or wvsat i guess (for clarity)
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
 
@@ -37,14 +39,12 @@ p_d = np.array([])
 z = np.array([])
 T = np.array([])
 wv = np.array([])
-i=0
 for line in f:
     line=line.split(';')
     p_d = np.append(p_d, float(line[1])*100.) #read pressure and convert to Pa
     z = np.append(z, float(line[2])) #read height in meters
     T = np.append(T, float(line[3])+T0) #read temperature and convert to Kelvin
     wv = np.append(wv, float(line[6])/1000.) #read water vapor mixing ratio and convert to kg/kg
-    i+=1
 f.close()
 #arrays for data in the environment and in the parcel, p:parcel env:environment
 sat = np.zeros(len(t1))
@@ -108,7 +108,7 @@ p[0] = 850e2
 #%%
 #differential equations
 def dwdt(w,Tp,Tenv,wL): 
-    return 1/(1+gamma)*(g*((Tp-Tenv)/Tenv-wL)-mu*abs(w)*w)
+    return 1./(1.+gamma)*(g*((Tp-Tenv)/Tenv-wL)-mu*abs(w)*w)
 
 def dTpdt(w,Tp,Tenv,zp,C,E):
     return -g*w/cp-mu*abs(w)*(Tp-Tenv)+Lv/cp*(C-E)
@@ -122,12 +122,12 @@ def dpdt(rho,w):
 def dwLdt(w,C,E,wL,warm_precip):
     return C-E-warm_precip-mu*wL*abs(w)
 
-def func(phi,C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,wvp,wL]
-    w=phi[1]
-    zp=phi[2]
-    Tp=phi[3]
-    wvp=phi[4]
-    wL=phi[5]
+def func(phi,procarg,rho,t):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,wvp,wL]
+    #extract values
+    w,zp,Tp,wvp,wL=phi[1],phi[2],phi[3],phi[4],phi[5]
+    C,E,warm_precip,Tenv,wvenv=procarg[0],procarg[1],procarg[2],procarg[3],procarg[4]
+
+    #do the diff eqs
     dp=dpdt(rho,w)*dt
     dw=dwdt(w,Tp,Tenv,wL)*dt
     dzp=w*dt
@@ -163,7 +163,7 @@ def warm_precip(wL):
     else:
         return 0.0
 #%%Integration
-t=0
+t=t1[0]
 Tenv[0] = Tenvcalc(zp[0])
 wvenv[0] = wvenvcalc(zp[0]) 
 sat[0] = wvp[0]/wvscalc(Tp[0],p[0])
@@ -175,15 +175,17 @@ for i in range(len(t1)-1):
     Tv = Tp[i]*(1+(wvp[i])/epsilon)/(1+wvp[i]) #virtual temp, from Aarnouts lecture notes
     rho = p[i]/(Rd*Tv) #gas law
     #Runge- Kutta numerical scheme 
+    processargs=np.array([C[i],E[i],Tenv[i],warm_precip(wL[i]),wvenv[i]])
     phi=np.array([p[i],w[i],zp[i],Tp[i],wvp[i],wL[i]])
     k1,k2,k3,k4=np.zeros(6),np.zeros(6),np.zeros(6),np.zeros(6)
-    k1[:]=func(phi, C[i],E[i],warm_precip(wL[i]),rho,Tenv[i], wvenv[i],t)
-    k2[:]=func((phi+0.5*k1), C[i],E[i],warm_precip(wL[i]),rho,Tenv[i], wvenv[i],(t+0.5*dt))
-    k3[:]=func((phi+0.5*k2), C[i],E[i],warm_precip(wL[i]),rho,Tenv[i], wvenv[i],(t+0.5*dt))
-    k4[:]=func((phi+k3), C[i],E[i],warm_precip(wL[i]),rho,Tenv[i], wvenv[i],(t+dt))
+    k1[:]=func(phi, processargs,rho,t)
+    k2[:]=func((phi+0.5*k1), processargs,rho,(t+0.5*dt))
+    k3[:]=func((phi+0.5*k2), processargs,rho,(t+0.5*dt))
+    k4[:]=func((phi+k3), processargs,rho,(t+dt))
 
     #update values and save them in resulting array that includes time
     phi=phi+np.array((1./6)*(k1+2*k2+2*k3+k4),dtype='float64')
+    t=t1[i+1]
     p[i+1]=phi[0]
     w[i+1]=phi[1]
     zp[i+1]=phi[2]
@@ -198,7 +200,6 @@ for i in range(len(t1)-1):
     C[i+1]=condensation(wvp[i+1],wvs)
     E[i+1]=evaporation(wvp[i+1],wvs,wL[i+1])
     warm_prec=warm_precip(wL[i+1])
-    t = t + dt
 #%%plot
 pl.plot(Tp,zp,c='r',label='Tp')
 pl.plot(Tenv,zp,c='g',label='Tenv')
