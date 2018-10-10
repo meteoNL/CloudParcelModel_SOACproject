@@ -22,6 +22,7 @@ epsilon=0.622 #molar mass ratio water and dry air
 tend=7200. #end of the simulation, s
 dt=1. #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
+dz=1.
 #print (len(t1))
 
 #parameters 
@@ -95,6 +96,29 @@ def wvenvcalc(h):
             dwvdz=(wv[i]-wv[i-1])/(z[i]-z[i-1])  
         wvenv = wv[i]+(h-z[i])*dwvdz
      return wvenv
+ 
+def p0(zloc,dz):
+    #locate layer in which parcel is
+    i=0
+    while zloc > z[i+1]:
+        i+=1
+        
+    #get properties at the base of this layer (lower bound, pressure & height) and layer means (temp & water vapor)    
+    zval=z[i]
+    pref=p_d[i]
+    Tloc=0.5*(T[i]+T[i+1])
+    wvloc=0.5*(wv[i]+wv[i+1])
+    Tvloc = Tloc*(1+(wvloc)/epsilon)/(1+wvloc) #assumed constant virtual temp, from Aarnouts lecture notes
+    
+    while zval < zloc:
+        #integrate hydrostatic equilibrium with EF and given dz
+        zval+=dz
+        rho = pref/(Rd*Tvloc)
+        dpdz=-rho*g
+        pref+=dpdz*dz
+    
+    return pref
+
 #%%
 #initial conditions
 Tp[0] = 288.5 #initial temperature of parcel, K
@@ -103,7 +127,7 @@ w[0] = 0. #initial velocity of parcel, m/s
 wvp[0] = 10.9/1000. #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
-p[0] = 850e2
+p[0] = p0(zp[0],dz)
 #%%
 #differential equations
 def dwdt(w,Tp,Tenv,wL): 
