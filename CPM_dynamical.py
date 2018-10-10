@@ -32,7 +32,6 @@ tau_warmpc = 20.*60 #time scale for the formation of warm precipitation, s
 C_evap=1400.
 #%%
 #read background data from 20090526_00z_De_Bilt
-data_env=np.array([])
 f=open('20090526_00z_De_Bilt.txt','r')
 p_d = np.array([])
 z = np.array([])
