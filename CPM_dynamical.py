@@ -106,17 +106,17 @@ def p0(zloc,dz):
     #get properties at the base of this layer (lower bound, pressure & height) and layer means (temp & water vapor)    
     zval=z[i]
     pref=p_d[i]
-    Tloc=0.5*(T[i]+T[i+1])
-    wvloc=0.5*(wv[i]+wv[i+1])
-    Tvloc = Tloc*(1+(wvloc)/epsilon)/(1+wvloc) #assumed constant virtual temp, from Aarnouts lecture notes
-    
+
     while zval < zloc:
         #integrate hydrostatic equilibrium with EF and given dz
-        zval+=dz
+        zval+=0.5*dz
+        Tloc=Tenvcalc(zval)
+        wvloc=wvenvcalc(zval)
+        Tvloc=Tloc*(1+(wvloc)/epsilon)/(1+wvloc) #from Aarnouts lecture notes
         rho = pref/(Rd*Tvloc)
         dpdz=-rho*g
         pref+=dpdz*dz
-    
+        zval+=0.5*dz
     return pref
 
 #%%
