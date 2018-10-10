@@ -175,7 +175,7 @@ for i in range(len(t1)-1):
     Tv = Tp[i]*(1+(wvp[i])/epsilon)/(1+wvp[i]) #virtual temp, from Aarnouts lecture notes
     rho = p[i]/(Rd*Tv) #gas law
     #Runge- Kutta numerical scheme 
-    processargs=np.array([C[i],E[i],Tenv[i],warm_precip(wL[i]),wvenv[i]])
+    processargs=np.array([C[i],E[i],warm_precip(wL[i]),Tenv[i],wvenv[i]])
     phi=np.array([p[i],w[i],zp[i],Tp[i],wvp[i],wL[i]])
     k1,k2,k3,k4=np.zeros(6),np.zeros(6),np.zeros(6),np.zeros(6)
     k1[:]=func(phi, processargs,rho,t)
