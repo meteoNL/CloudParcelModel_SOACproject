@@ -17,7 +17,7 @@ def Lv(T):#latent heat of vaporization water
     return (2.501 - 2.361e-3*(T-T0))*1e6
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
-wLthres=4.5e-4 # threshold for precip based on ECMWF documentation
+wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 
 #time space
 tend=7200. #end of the simulation, s
@@ -28,10 +28,10 @@ dz=1.
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
-mu=2e-4 #entrainment of air
+mu=2e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
-tau_warmpc = 20.*60 #time scale for the formation of warm precipitation, s
+tau_warmpc = 20.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
 C_evap=1400.
 #%%
 #read background data from 20090526_00z_De_Bilt
