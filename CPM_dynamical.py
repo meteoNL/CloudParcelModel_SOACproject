@@ -14,11 +14,6 @@ T0=273.15 #zero Celsius Kelvin reference temperature
 Rv=461.5 #gas constant water vapor
 Rd=287.05 #gas constant dry air
 Lv=2.5e6 #latent heat of vaporization water
-<<<<<<< HEAD
-=======
-    
-# As far as I believe Lv can change approx 10% as function of T (between 2.2 and 2.5 e+6), so we may implement that or search for T-dependence? 
->>>>>>> e7f529596b378bf90016d56554f4e53cf2f175bd
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
 
