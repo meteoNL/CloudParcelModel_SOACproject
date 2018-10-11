@@ -7,7 +7,7 @@ Created on Fri Oct 05 08:12:20 2018
 import numpy as np
 import matplotlib.pyplot as pl
 
-#constants
+#(pseudo-)constants
 g=9.81 #gravitational acceleration
 cp=1005. #specific heat per kilogram of dry air
 T0=273.15 #zero Celsius Kelvin reference temperature
@@ -18,7 +18,10 @@ def Lv(T):#latent heat of vaporization water
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation
-
+Ka = 2.4e-2 #Thermal conductivity of air
+rhoi = 700 #density of ice cristal, kg/m3
+def chi(p):
+    return 2.21/p
 #time space
 tend=7200. #end of the simulation, s
 dt=1. #time step, s
