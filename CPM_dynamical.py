@@ -38,6 +38,7 @@ tau_warmpc = 20.*60 #time scale for the formation of warm precipitation, s, 1000
 C_evap=1400.
 #%%
 #read background data from 20090526_00z_De_Bilt
+fn='20090526_00z_De_Bilt.txt'
 f=open('20090526_00z_De_Bilt.txt','r')
 p_d = np.array([])
 z = np.array([])
@@ -227,11 +228,23 @@ for i in range(len(t1)-1):
     C[i+1]=condensation(wvp[i+1],wvs)
     E[i+1]=evaporation(wvp[i+1],wvs,wL[i+1])
     warm_prec=warm_precip(wL[i+1])
-#%%plot
-pl.plot(Tp,zp,c='r',label='Tp')
-pl.plot(Tenv,zp,c='g',label='Tenv')
-pl.legend()
+#%%plot temerature profile
+gamma=0.0050
+pl.plot((Tp+gamma*zp),zp,c='r',label='Tp')
+pl.plot((Tenv+gamma*zp),zp,c='g',label='Tenv')
+pl.title(fn[:-4])
+z_plot=np.arange(0,15000,1000)
+xticks=np.array([])
+for i in range(193,310,5):
+    pl.plot(i*np.ones(len(z_plot))+gamma*z_plot,z_plot,c='black')
+    if i > 270 and i < 300:
+        xticks=np.append(xticks,np.array([i]))
+pl.xlim(270,300)
+pl.xticks(xticks,(xticks-273))
+pl.legend(loc=1)
 pl.ylim(0,14000)
+pl.xlabel('Temperature (degrees Celsius)')
+pl.ylabel('Height (m)')
 pl.show()
 pl.plot(t1,sat)
 pl.show()
