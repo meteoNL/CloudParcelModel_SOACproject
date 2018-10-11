@@ -17,16 +17,11 @@ def Lv(T):#latent heat of vaporization water
     return (2.501 - 2.361e-3*(T-T0))*1e6
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
-<<<<<<< HEAD
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
-
-=======
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation
 Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700 #density of ice cristal, kg/m3
-def chi(p):
-    return 2.21/p
->>>>>>> f02388cedeb17b6781fee98052450450164089bd
+
 #time space
 tend=7200. #end of the simulation, s
 dt=1. #time step, s
