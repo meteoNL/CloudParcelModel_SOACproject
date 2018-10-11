@@ -253,6 +253,7 @@ for i in range(len(t1)-1):
 #%%plot temerature profile
 gamma=0.0050
 xticks=np.array([])
+z_plot=np.arange(0,15000,1000)
 for i in range(193,310,5):
     pl.plot(i*np.ones(len(z_plot))+gamma*z_plot,z_plot,c=(0.6,0.6,0.6))
     if i > 270 and i < 300:
@@ -260,7 +261,6 @@ for i in range(193,310,5):
 pl.plot((Tp+gamma*zp),zp,c='r',label='Tp')
 pl.plot((Tenv+gamma*zp),zp,c='g',label='Tenv')
 pl.title(fn[:-4])
-z_plot=np.arange(0,15000,1000)
 pl.xlim(270,300)
 pl.xticks(xticks,(xticks-273))
 pl.legend(loc=1)
