@@ -22,18 +22,14 @@ def Ls(T):
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
-wLthres=4.5e-4 # threshold for precip based on ECMWF documentation
 Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700 #density of ice cristal, kg/m3
-<<<<<<< HEAD
 def chi(p):
     return 2.21/p
 def A(T):
     return Ls(T)/Ka/T*(Ls(T)/(Rv*T)-1)
 Mi0 = 1e-12
-=======
 
->>>>>>> cb6f3f8d8c6fefff6a2679b27b16577aa24afaec
 #time space
 tend=7200. #end of the simulation, s
 dt=1. #time step, s
