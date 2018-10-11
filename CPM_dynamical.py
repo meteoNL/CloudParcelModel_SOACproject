@@ -17,6 +17,7 @@ def Lv(T):#latent heat of vaporization water
     return (2.501 - 2.361e-3*(T-T0))*1e6
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
+wLthres=4.5e-4 # threshold for precip based on ECMWF documentation
 
 #time space
 tend=7200. #end of the simulation, s
@@ -181,8 +182,8 @@ def evaporation(wv,wvs,wL):
         return 0.00
     
 def warm_precip(wL):
-    if wL > 0:
-        return wL*(1-np.exp(-dt/tau_warmpc))
+    if wL > wLthres:
+        return (wL-wLthres)*(1-np.exp(-dt/tau_warmpc))
     else:
         return 0.0
 #%%Integration
