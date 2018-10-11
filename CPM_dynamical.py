@@ -13,8 +13,7 @@ cp=1005. #specific heat per kilogram of dry air
 T0=273.15 #zero Celsius Kelvin reference temperature
 Rv=461.5 #gas constant water vapor
 Rd=287.05 #gas constant dry air
-Lv=2.2647e6 #latent heat of vaporization water
-# As far as I believe Lv can change approx 10% as function of T (between 2.2 and 2.5 e+6), so we may implement that or search for T-dependence? 
+Lv=2.5e6 #latent heat of vaporization water
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
 
@@ -145,7 +144,7 @@ def dpdt(rho,w):
 def dwLdt(w,C,E,wL,warm_precip):
     return C-E-warm_precip-mu*wL*abs(w)
 
-def func(phi,procarg,rho,t):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,wvp,wL]
+def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,wvp,wL]
     #extract values
     w,zp,Tp,wvp,wL=phi[1],phi[2],phi[3],phi[4],phi[5]
     C,E,warm_precip,Tenv,wvenv=procarg[0],procarg[1],procarg[2],procarg[3],procarg[4]
@@ -201,10 +200,10 @@ for i in range(len(t1)-1):
     processargs=np.array([C[i],E[i],warm_precip(wL[i]),Tenv[i],wvenv[i]])
     phi=np.array([p[i],w[i],zp[i],Tp[i],wvp[i],wL[i]])
     k1,k2,k3,k4=np.zeros(6),np.zeros(6),np.zeros(6),np.zeros(6)
-    k1[:]=func(phi, processargs,rho,t)
-    k2[:]=func((phi+0.5*k1), processargs,rho,(t+0.5*dt))
-    k3[:]=func((phi+0.5*k2), processargs,rho,(t+0.5*dt))
-    k4[:]=func((phi+k3), processargs,rho,(t+dt))
+    k1[:]=func(phi, processargs,rho)
+    k2[:]=func((phi+0.5*k1), processargs,rho)
+    k3[:]=func((phi+0.5*k2), processargs,rho)
+    k4[:]=func((phi+k3), processargs,rho)
 
     #update values and save them in resulting array that includes time
     phi=phi+np.array((1./6)*(k1+2*k2+2*k3+k4),dtype='float64')
