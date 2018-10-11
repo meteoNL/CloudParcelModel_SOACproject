@@ -14,7 +14,7 @@ T0=273.15 #zero Celsius Kelvin reference temperature
 Rv=461.5 #gas constant water vapor
 Rd=287.05 #gas constant dry air
 def Lv(T):#latent heat of vaporization water
-    return (2.501 - 3.361e-3*(T-T0))*1e6
+    return (2.501 - 2.361e-3*(T-T0))*1e6
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
 
