@@ -52,11 +52,13 @@ p_d = np.array([])
 z = np.array([])
 T = np.array([])
 wv = np.array([])
+Td=np.array([])
 for line in f:
     line=line.split(';')
     p_d = np.append(p_d, float(line[1])*100.) #read pressure and convert to Pa
     z = np.append(z, float(line[2])) #read height in meters
     T = np.append(T, float(line[3])+T0) #read temperature and convert to Kelvin
+    Td = np.append(Td,float(line[4])+T0)
     wv = np.append(wv, float(line[6])/1000.) #read water vapor mixing ratio and convert to kg/kg
 f.close()
 #arrays for data in the environment and in the parcel, p:parcel env:environment
@@ -259,7 +261,9 @@ for i in range(193,310,5):
     if i > 270 and i < 300:
         xticks=np.append(xticks,np.array([i]))
 pl.plot((Tp+gamma*zp),zp,c='r',label='Tp')
-pl.plot((Tenv+gamma*zp),zp,c='g',label='Tenv')
+#pl.plot((Tenv+gamma*zp),zp,c='g',label='Tenv')
+pl.plot((Td+gamma*z),z,c='b',label='Tdew',ls='--')
+pl.plot((T+gamma*z),z,c='g',label='Tenv')
 pl.title(fn[:-4])
 pl.xlim(270,300)
 pl.xticks(xticks,(xticks-273))
