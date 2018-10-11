@@ -13,7 +13,8 @@ cp=1005. #specific heat per kilogram of dry air
 T0=273.15 #zero Celsius Kelvin reference temperature
 Rv=461.5 #gas constant water vapor
 Rd=287.05 #gas constant dry air
-Lv=2.5e6 #latent heat of vaporization water
+def Lv(T):#latent heat of vaporization water
+    return (2.501 - 3.361e-3*(T-T0))*1e6
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
 
@@ -133,7 +134,7 @@ def dwdt(w,Tp,Tenv,wL):
     return 1./(1.+gamma)*(g*((Tp-Tenv)/Tenv-wL)-mu*abs(w)*w)
 
 def dTpdt(w,Tp,Tenv,zp,C,E):
-    return -g*w/cp-mu*abs(w)*(Tp-Tenv)+Lv/cp*(C-E)
+    return -g*w/cp-mu*abs(w)*(Tp-Tenv)+Lv(Tp)/cp*(C-E)
 
 def dwvpdt(w,wvp,wvenv,C,E):
     return -mu*(wvp-wvenv)*abs(w)-C+E
@@ -161,7 +162,7 @@ def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,w
 def wvscalc(T,p):#calculation of water vapor saturation mixing ratio
     #from Aarnouts lecture notes and Wallace and Hobbs
     diffT=(1/T0-1/T)
-    difflnes=Lv/Rv*diffT
+    difflnes=Lv(T)/Rv*diffT
     lnes=difflnes+np.log(es0)
     es=np.exp(lnes)
     wvsat=epsilon*(es/(p-es))
