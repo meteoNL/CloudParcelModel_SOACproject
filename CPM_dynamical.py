@@ -21,14 +21,19 @@ def Ls(T):
 
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
+wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation
 Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700 #density of ice cristal, kg/m3
+<<<<<<< HEAD
 def chi(p):
     return 2.21/p
 def A(T):
     return Ls(T)/Ka/T*(Ls(T)/(Rv*T)-1)
 Mi0 = 1e-12
+=======
+
+>>>>>>> cb6f3f8d8c6fefff6a2679b27b16577aa24afaec
 #time space
 tend=7200. #end of the simulation, s
 dt=1. #time step, s
@@ -38,13 +43,14 @@ dz=1.
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
-mu=2e-4 #entrainment of air
+mu=2e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
-tau_warmpc = 20.*60 #time scale for the formation of warm precipitation, s
+tau_warmpc = 20.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
 C_evap=1400.
 #%%
 #read background data from 20090526_00z_De_Bilt
+fn='20090526_00z_De_Bilt.txt'
 f=open('20090526_00z_De_Bilt.txt','r')
 p_d = np.array([])
 z = np.array([])
@@ -248,11 +254,23 @@ for i in range(len(t1)-1):
     C[i+1]=condensation(wvp[i+1],wvs)
     E[i+1]=evaporation(wvp[i+1],wvs,wL[i+1])
     warm_prec=warm_precip(wL[i+1])
-#%%plot
-pl.plot(Tp,zp,c='r',label='Tp')
-pl.plot(Tenv,zp,c='g',label='Tenv')
-pl.legend()
+#%%plot temerature profile
+gamma=0.0050
+xticks=np.array([])
+for i in range(193,310,5):
+    pl.plot(i*np.ones(len(z_plot))+gamma*z_plot,z_plot,c=(0.6,0.6,0.6))
+    if i > 270 and i < 300:
+        xticks=np.append(xticks,np.array([i]))
+pl.plot((Tp+gamma*zp),zp,c='r',label='Tp')
+pl.plot((Tenv+gamma*zp),zp,c='g',label='Tenv')
+pl.title(fn[:-4])
+z_plot=np.arange(0,15000,1000)
+pl.xlim(270,300)
+pl.xticks(xticks,(xticks-273))
+pl.legend(loc=1)
 pl.ylim(0,14000)
+pl.xlabel('Temperature (degrees Celsius)')
+pl.ylabel('Height (m)')
 pl.show()
 pl.plot(t1,sat)
 pl.show()
