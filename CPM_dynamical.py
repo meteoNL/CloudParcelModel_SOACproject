@@ -13,8 +13,12 @@ cp=1005. #specific heat per kilogram of dry air
 T0=273.15 #zero Celsius Kelvin reference temperature
 Rv=461.5 #gas constant water vapor
 Rd=287.05 #gas constant dry air
+Lf = 3.35e5
 def Lv(T):#latent heat of vaporization water
     return (2.501 - 2.361e-3*(T-T0))*1e6
+def Ls(T):
+    return Lf+ Lv(T)
+
 es0=610.78 #reference saturation vapor pressure
 epsilon=0.622 #molar mass ratio water and dry air
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation
@@ -22,6 +26,9 @@ Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700 #density of ice cristal, kg/m3
 def chi(p):
     return 2.21/p
+def A(T):
+    return Ls(T)/Ka/T*(Ls(T)/(Rv*T)-1)
+Mi0 = 1e-12
 #time space
 tend=7200. #end of the simulation, s
 dt=1. #time step, s
@@ -171,19 +178,33 @@ def wvscalc(T,p):#calculation of water vapor saturation mixing ratio
     es=np.exp(lnes)
     wvsat=epsilon*(es/(p-es))
     return wvsat
-
+def esicalc(T,p):#calculation of water vapor saturation mixing ratio
+    #fromUniversity of North Carolina lecuture slides
+    T1=273.16
+    es1=611.20
+    diffT=(1/T1-1/T)
+    difflnesi=Ls(T)/Rv*diffT
+    lnesi=difflnesi+np.log(es1)
+    esi = np.exp(lnesi)
+    return esi
 def condensation(wv,wvs):
     if wv > wvs:
         return (wv-wvs)*(1-np.exp(-1/tau_cond*dt))
     else:
         return 0.00
-
 def evaporation(wv,wvs,wL):
     if wvs > wv and wL>0:
         return C_evap*wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))
     else:
         return 0.00
-    
+def B(T,p):
+    return Rv*T*chi(p)*esicalc(T,p)    
+def Ni(T,p):
+    return 1e3*np.exp(12.96*(wvscalc(T,p)-esicalc(T,p))/esicalc(T,p)-0.639)
+def cvd(T,p,rho):
+    return 7.8*(Ni(T,p)**(2/3)*(wvscalc(T,p)-esicalc(T,p)))/(rho**(1/3)*(A(T)+B(T,p))*esicalc(T,p))
+def Wi(T,p,rho,t):
+    return (2/3*cvd*t+Mi0*Ni(T,p)/rho)**(3/2)
 def warm_precip(wL):
     if wL > wLthres:
         return (wL-wLthres)*(1-np.exp(-dt/tau_warmpc))
