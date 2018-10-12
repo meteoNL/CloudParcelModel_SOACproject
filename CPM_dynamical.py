@@ -19,10 +19,8 @@ es0=610.78 #reference saturation vapor pressure
 T1=273.16
 es1=611.20
 epsilon=0.622 #molar mass ratio water and dry air
-wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700 #density of ice cristal, kg/m3
-Cconv = 2.00 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 
 #pseudoconstants
 def chi(p): #diffusivity of water vapor
@@ -45,8 +43,12 @@ gamma=0.5 #induced relation with environmental air, inertial
 mu=2e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
-tau_warmpc = 20.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
+tau_warmpc = 90.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
+tau_coldpc = 12.*60 #time scale for the formation of cold precipitation, 700 s in ECMWF doc mentioned
 C_evap=1400.
+wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
+Cconv = 2.00 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
+
 
 #%%
 #read background data from 20090526_00z_De_Bilt
@@ -155,7 +157,7 @@ p[0] = p0(zp[0],dz)
 #%%
 #differential equations
 def dwdt(w,Tp,Tenv,wL): 
-    return 1./(1.+gamma)*(g*((Tp-Tenv)/Tenv-wL)-mu*abs(w)*w)
+    return 1./(1.+gamma)*(g*((Tp-Tenv)/Tenv-wL-wi[i])-mu*abs(w)*w)
 
 def dTpdt(w,Tp,Tenv,zp,C,E,dwi):
     return -g*w/cp-mu*abs(w)*(Tp-Tenv)+Lv(Tp)/cp*(C-E)+dwi*Lf/cp
@@ -183,7 +185,7 @@ def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,w
     dwL=dwLdt(w,C,E,wL,warm_precip,dwi)*dt
     return np.array([dp,dw,dzp,dTp,dwvp,dwL])
 
-#%%
+#%% thermodynamic equilibria over water/ice surfaces
 def escalc(T):
     #from Aarnouts lecture notes and Wallace and Hobbs
     diffT=(1./T0-1./T)
@@ -206,6 +208,8 @@ def esicalc(T,p):#calculation of water vapor saturation mixing ratio
     esi = np.exp(lnesi)
     return esi
 
+#%%
+#processes/phase changes
 def condensation(wv,wvs):
     if wv > wvs:
         return (wv-wvs)*(1-np.exp(-1/tau_cond*dt))
@@ -238,11 +242,20 @@ def Wi_depmeltfreez(T,p,rho,wL,t):
         return 0.00
 
 #warm precipitation (mainly autoconversion simulation)
-def warm_precip(wL):
-    if wL > wLthres:
+def warm_precip(wL,Tp):
+    if wL > wLthres and Tp > T0:
         return (wL-wLthres)*(1-np.exp(-dt/tau_warmpc))
     else:
         return 0.0
+
+#cold precipitation
+def cold_precip(wL,wi):
+    #assumption: the precipitation stays in a mixed phase and doesn't melt significantly before leaving the cloud at the base for now
+  #  if wL > wLthres and wi > 0.00:
+   #     return (wi+wL-wLthres)*(1-np.exp(-dt/tau_coldpc))
+   # else:
+    #    return 0.00
+    return 0.00
     
 #%%Integration procedure
 t=t1[0]
@@ -258,7 +271,7 @@ for i in range(len(t1)-1):
     Tv = Tp[i]*(1+(wvp[i])/epsilon)/(1+wvp[i]) #virtual temp, from Aarnouts lecture notes
     rho = p[i]/(Rd*Tv) #gas law
     #Runge- Kutta numerical scheme 
-    processargs=np.array([C[i],E[i],warm_precip(wL[i]),Tenv[i],wvenv[i],dwi])
+    processargs=np.array([C[i],E[i],warm_precip(wL[i],Tp[i]),Tenv[i],wvenv[i],dwi])
     phi=np.array([p[i],w[i],zp[i],Tp[i],wvp[i],wL[i]])
     k1,k2,k3,k4=np.zeros(6),np.zeros(6),np.zeros(6),np.zeros(6)
     k1[:]=func(phi, processargs,rho)
@@ -275,16 +288,18 @@ for i in range(len(t1)-1):
     Tp[i+1]=phi[3]
     wvp[i+1]=phi[4]  
     wL[i+1]=phi[5]
-    total_prec[i+1]=total_prec[i]+warm_precip(wL[i+1]) #total precipitation
+    total_prec[i+1]=total_prec[i]+warm_precip(wL[i+1],Tp[i+1]) #total precipitation
     Tenv[i+1] = Tenvcalc(zp[i+1])
     wvenv[i+1] = wvenvcalc(zp[i+1]) 
     wvs = wvscalc(Tp[i+1],p[i+1]) #water vapor saturation mixing ratio 
     sat[i+1] = wvp[i+1]/wvs
     C[i+1]=condensation(wvp[i+1],wvs)
     E[i+1]=evaporation(wvp[i+1],wvs,wL[i+1])
-    warm_prec=warm_precip(wL[i+1])
+    warm_prec=warm_precip(wL[i+1],Tp[i+1])
     wi[(i+1)]=Wi_depmeltfreez(Tp[i+1],p[i+1],rho,wL[i+1],dt)
     dwi=wi[i+1]-wi[i]
+    cold_prec=cold_precip(wL[i+1],wi[i+1])
+    total_prec[i+1]=total_prec[i+1]+cold_prec
     
 #%% visualization of results
 #plot temerature profile
