@@ -20,6 +20,8 @@ def Ls(T):
     return Lf+ Lv(T)
 
 es0=610.78 #reference saturation vapor pressure
+T1=273.16
+es1=611.20
 epsilon=0.622 #molar mass ratio water and dry air
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 Ka = 2.4e-2 #Thermal conductivity of air
@@ -71,6 +73,7 @@ wvenv = np.zeros(len(t1))
 p = np.zeros(len(t1))
 Tenv = np.zeros(len(t1))
 wL = np.zeros(len(t1))
+wi = np.zeros(len(t1))
 total_prec = np.zeros(len(t1))
 sat = np.zeros(len(t1))
 C = np.zeros(len(t1))
@@ -174,41 +177,49 @@ def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,w
     dwL=dwLdt(w,C,E,wL,warm_precip)*dt
     return np.array([dp,dw,dzp,dTp,dwvp,dwL])
 #%%
-def wvscalc(T,p):#calculation of water vapor saturation mixing ratio
+def escalc(T):
     #from Aarnouts lecture notes and Wallace and Hobbs
-    diffT=(1/T0-1/T)
+    diffT=(1./T0-1./T)
     difflnes=Lv(T)/Rv*diffT
     lnes=difflnes+np.log(es0)
     es=np.exp(lnes)
+    return es
+
+def wvscalc(T,p):#calculation of water vapor saturation mixing ratio
+    #from Aarnouts lecture notes and Wallace and Hobbs
+    es=escalc(T)
     wvsat=epsilon*(es/(p-es))
     return wvsat
+
 def esicalc(T,p):#calculation of water vapor saturation mixing ratio
     #fromUniversity of North Carolina lecuture slides
-    T1=273.16
-    es1=611.20
-    diffT=(1/T1-1/T)
+    diffT=(1./T1-1./T)
     difflnesi=Ls(T)/Rv*diffT
     lnesi=difflnesi+np.log(es1)
     esi = np.exp(lnesi)
     return esi
+
 def condensation(wv,wvs):
     if wv > wvs:
         return (wv-wvs)*(1-np.exp(-1/tau_cond*dt))
     else:
         return 0.00
+
 def evaporation(wv,wvs,wL):
     if wvs > wv and wL>0:
         return C_evap*wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))
     else:
         return 0.00
+
 def B(T,p):
     return Rv*T*chi(p)*esicalc(T,p)    
 def Ni(T,p):
-    return 1e3*np.exp(12.96*(wvscalc(T,p)-esicalc(T,p))/esicalc(T,p)-0.639)
+    return 1e3*np.exp(12.96*(escalc(T)-esicalc(T,p))/esicalc(T,p)-0.639)
 def cvd(T,p,rho):
-    return 7.8*(Ni(T,p)**(2/3)*(wvscalc(T,p)-esicalc(T,p)))/(rho**(1/3)*(A(T)+B(T,p))*esicalc(T,p))
+    return 7.8*(Ni(T,p)**(2./3)*(escalc(T)-esicalc(T,p)))/(rho**(1./3)*(A(T)+B(T,p))*esicalc(T,p))
 def Wi(T,p,rho,t):
-    return (2/3*cvd*t+Mi0*Ni(T,p)/rho)**(3/2)
+    return (2./3*cvd(T,p,rho)*t+Mi0*Ni(T,p)/rho)**(3./2)
+
 def warm_precip(wL):
     if wL > wLthres:
         return (wL-wLthres)*(1-np.exp(-dt/tau_warmpc))
