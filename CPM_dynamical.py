@@ -37,9 +37,9 @@ def Ls(T): #latent heat of sublimation water
 
 #time space
 tend=7200. #end of the simulation, s
-dt=1.2 #time step, s
+dt=0.2 #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
-dz=1.
+dz=0.1
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
@@ -235,7 +235,7 @@ def B(T,p):
 def Ni(T,p):
     return 1e3*np.exp(12.96*(escalc(T)-esicalc(T,p))/esicalc(T,p)-0.639)
 def cvd(T,p,rho):
-    return Cconv*7.8*(Ni(T,p)**(2./3)*(escalc(T)-esicalc(T,p)))/(rho**(1./3)*(A(T)+B(T,p))*esicalc(T,p))
+    return Cconv*7.8*(((Ni(T,p)/rho)**(2./3))*(escalc(T)-esicalc(T,p)))/(rhoi**(1./3)*(A(T)+B(T,p))*esicalc(T,p))
 def Wi_depmeltfreez(T,p,rho,wL,dt):
     if T > T2 and T < T0:
         result=(2./3*cvd(T,p,rho)*dt+wi[i]**(2./3))**(3./2)
@@ -366,3 +366,11 @@ pl.show()
 pl.figure(figsize=(12,8))
 pl.plot(t1,w)
 pl.show()
+
+pl.plot(wvp)
+pl.plot(wvscalc(Tp[:],p[:]))
+pl.plot(sat/1000)
+pl.show()
+
+pl.plot(t1[7000:],wvp[7000:])
+pl.plot(t1[7000:],wvscalc(Tp[7000:],p[7000:]))
