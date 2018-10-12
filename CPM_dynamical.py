@@ -17,6 +17,7 @@ Rd=287.05 #gas constant dry air
 Lf = 3.35e5
 es0=610.78 #reference saturation vapor pressure
 T1=273.16
+T2=235
 es1=611.20
 epsilon=0.622 #molar mass ratio water and dry air
 Ka = 2.4e-2 #Thermal conductivity of air
@@ -40,13 +41,14 @@ dz=1.
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
-mu=2e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
+mu=0.5e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
 tau_warmpc = 90.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
 tau_coldpc = 12.*60 #time scale for the formation of cold precipitation, 700 s in ECMWF doc mentioned
 C_evap=1400.
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
+withres=wLthres #threshold for precip form from ice
 Cconv = 2.00 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 
 
@@ -84,6 +86,7 @@ total_prec = np.zeros(len(t1))
 sat = np.zeros(len(t1))
 C = np.zeros(len(t1))
 E = np.zeros(len(t1))
+total_water=np.zeros((len(t1)))
 
 #%% envirmental profiles used
 #interpolate T and wv profiles, linear interpolation y=a*x+b where a = d/dz of the respective variable and b is the reference value that was measured
@@ -209,7 +212,7 @@ def esicalc(T,p):#calculation of water vapor saturation mixing ratio
     return esi
 
 #%%
-#processes/phase changes
+#processes: phase changes
 def condensation(wv,wvs):
     if wv > wvs:
         return (wv-wvs)*(1-np.exp(-1/tau_cond*dt))
@@ -230,17 +233,18 @@ def Ni(T,p):
 def cvd(T,p,rho):
     return Cconv*7.8*(Ni(T,p)**(2./3)*(escalc(T)-esicalc(T,p)))/(rho**(1./3)*(A(T)+B(T,p))*esicalc(T,p))
 def Wi_depmeltfreez(T,p,rho,wL,t):
-    if T > 235 and T < 273:
+    if T > T2 and T < T0:
         result=(2./3*cvd(T,p,rho)*t+wi[(i-1)]**(2./3))**(3./2)
         if result < wL:
             return result
         else:
             return wi[i]+wL
-    elif T < 235:
+    elif T < T2:
         return wi[i]+wL
     else:
         return 0.00
 
+#%% precipitation processes
 #warm precipitation (mainly autoconversion simulation)
 def warm_precip(wL,Tp):
     if wL > wLthres and Tp > T0:
@@ -250,11 +254,11 @@ def warm_precip(wL,Tp):
 
 #cold precipitation
 def cold_precip(wL,wi):
-    #assumption: the precipitation stays in a mixed phase and doesn't melt significantly before leaving the cloud at the base for now
-  #  if wL > wLthres and wi > 0.00:
-   #     return (wi+wL-wLthres)*(1-np.exp(-dt/tau_coldpc))
-   # else:
-    #    return 0.00
+    result1=(wi-withres)*(1-np.exp(-dt/tau_coldpc))
+    if wi > withres:
+        return result1
+    else:
+        return 0.00
     return 0.00
     
 #%%Integration procedure
@@ -288,18 +292,26 @@ for i in range(len(t1)-1):
     Tp[i+1]=phi[3]
     wvp[i+1]=phi[4]  
     wL[i+1]=phi[5]
-    total_prec[i+1]=total_prec[i]+warm_precip(wL[i+1],Tp[i+1]) #total precipitation
+    
+    #update parcel environment
     Tenv[i+1] = Tenvcalc(zp[i+1])
     wvenv[i+1] = wvenvcalc(zp[i+1]) 
+    
+    #calculate saturation values
     wvs = wvscalc(Tp[i+1],p[i+1]) #water vapor saturation mixing ratio 
-    sat[i+1] = wvp[i+1]/wvs
+    sat[i+1] = wvp[i+1]/wvs    
+    
+    #then do condencsation, evaporation, freezing, melting, deposition/Findeisen-Wegener-Bergeron process
     C[i+1]=condensation(wvp[i+1],wvs)
     E[i+1]=evaporation(wvp[i+1],wvs,wL[i+1])
-    warm_prec=warm_precip(wL[i+1],Tp[i+1])
     wi[(i+1)]=Wi_depmeltfreez(Tp[i+1],p[i+1],rho,wL[i+1],dt)
     dwi=wi[i+1]-wi[i]
+    
+    #precipitation process of the clouds and remove the cold precip from ice parcels
+    warm_prec=warm_precip(wL[i+1],Tp[i+1])
     cold_prec=cold_precip(wL[i+1],wi[i+1])
-    total_prec[i+1]=total_prec[i+1]+cold_prec
+    wi[i+1]=wi[i+1]-cold_prec
+    total_prec[i+1]=total_prec[i]+warm_prec+cold_prec #update total precipitation
     
 #%% visualization of results
 #plot temerature profile
