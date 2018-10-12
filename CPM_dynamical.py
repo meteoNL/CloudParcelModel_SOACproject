@@ -14,11 +14,11 @@ cp=1005. #specific heat per kilogram of dry air
 T0=273.15 #zero Celsius Kelvin reference temperature
 Rv=461.5 #gas constant water vapor
 Rd=287.05 #gas constant dry air
-Lf = 3.35e5
+Lf = 3.35e5 #latent heat of fusion
 es0=610.78 #reference saturation vapor pressure
-T1=273.16
-T2=235.
-es1=611.20
+T1=273.16 #tripel point of water
+T2=235. #upper bound for removing water vapor into ice
+es1=611.20 #saturation vapor pressure over ice at tripel point
 epsilon=0.622 #molar mass ratio water and dry air
 Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700. #density of ice cristal, kg/m3
@@ -41,15 +41,15 @@ dz=1.
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
-mu=0.5e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
+mu=0.6e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
 tau_warmpc = 90.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
 tau_coldpc = 12.*60 #time scale for the formation of cold precipitation, 700 s in ECMWF doc mentioned
-C_evap=1400.
+C_evap=1400. #rate constant for evaporation
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 withres=wLthres #threshold for precip form from ice
-Cconv = 2.00 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
+Cconv = 1.00 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 
 
 #%%
@@ -153,7 +153,7 @@ def p0(zloc,dz):
 #initial conditions
 Tp[0] = 288.5 #initial temperature of parcel, K
 zp[0] = 1500. #initial height of parcel, m
-w[0] = 0. #initial velocity of parcel, m/s
+w[0] = 1. #initial velocity of parcel, m/s
 wvp[0] = 10.9/1000. #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
@@ -322,13 +322,13 @@ xticks=np.array([])
 z_plot=np.arange(0,15000,1000)
 for i in range(193,310,5):
     pl.plot(i*np.ones(len(z_plot))+gamma*z_plot,z_plot,c=(0.6,0.6,0.6))
-    if i > 265 and i < 300:
+    if i > 260 and i < 300:
         xticks=np.append(xticks,np.array([i]))
 pl.plot((Tp+gamma*zp),zp,c='r',label='Tp')
 pl.plot((Td+gamma*z),z,c='b',label='Tdew',ls='--')
 pl.plot((T+gamma*z),z,c='g',label='Tenv')
 pl.title(fn[:-4])
-pl.xlim(265,300)
+pl.xlim(260,300)
 pl.xticks(xticks,(xticks-273))
 pl.legend(loc=1)
 pl.ylim(0,14000)
@@ -353,3 +353,6 @@ pl.show()
 pl.plot(wL,Tp,label='Cloud liquid water')
 pl.plot(wi,Tp,label='Cloud ice')
 pl.legend()
+pl.show()
+
+pl.plot(t1,w)
