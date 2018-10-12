@@ -17,11 +17,11 @@ Rd=287.05 #gas constant dry air
 Lf = 3.35e5
 es0=610.78 #reference saturation vapor pressure
 T1=273.16
-T2=235
+T2=235.
 es1=611.20
 epsilon=0.622 #molar mass ratio water and dry air
 Ka = 2.4e-2 #Thermal conductivity of air
-rhoi = 700 #density of ice cristal, kg/m3
+rhoi = 700. #density of ice cristal, kg/m3
 
 #pseudoconstants
 def chi(p): #diffusivity of water vapor
