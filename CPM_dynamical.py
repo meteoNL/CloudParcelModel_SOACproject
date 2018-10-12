@@ -37,13 +37,13 @@ def Ls(T): #latent heat of sublimation water
 
 #time space
 tend=7200. #end of the simulation, s
-dt=0.1 #time step, s
+dt=1.2 #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 dz=1.
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
-mu=0.#0.9e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
+mu=0#0.9e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
 tau_warmpc = 90.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
@@ -236,9 +236,9 @@ def Ni(T,p):
     return 1e3*np.exp(12.96*(escalc(T)-esicalc(T,p))/esicalc(T,p)-0.639)
 def cvd(T,p,rho):
     return Cconv*7.8*(Ni(T,p)**(2./3)*(escalc(T)-esicalc(T,p)))/(rho**(1./3)*(A(T)+B(T,p))*esicalc(T,p))
-def Wi_depmeltfreez(T,p,rho,wL,t):
+def Wi_depmeltfreez(T,p,rho,wL,dt):
     if T > T2 and T < T0:
-        result=(2./3*cvd(T,p,rho)*t+wi[(i-1)]**(2./3))**(3./2)
+        result=(2./3*cvd(T,p,rho)*dt+wi[i]**(2./3))**(3./2)
         if result < wL:
             return result
         else:
@@ -321,9 +321,9 @@ for i in range(len(t1)-1):
 #plot temerature profile
 gamma=0.0050 #skew T visualzation constant
 xticks=np.array([])
-z_plot=np.arange(0,15000,1000)
+z_plot=np.arange(0,18000,1000)
 pl.figure(figsize=(12,8))
-for i in range(193,310,5):
+for i in range(183,310,5):
     pl.plot(i*np.ones(len(z_plot))+gamma*z_plot,z_plot,c=(0.6,0.6,0.6))
     if i > 260 and i < 300:
         xticks=np.append(xticks,np.array([i]))
@@ -334,7 +334,7 @@ pl.title(fn[:-4])
 pl.xlim(260,300)
 pl.xticks(xticks,(xticks-273))
 pl.legend(loc=1)
-pl.ylim(0,14000)
+pl.ylim(0,16000)
 pl.xlabel('Temperature (degrees Celsius)')
 pl.ylabel('Height (m)')
 pl.show()
@@ -342,7 +342,7 @@ pl.show()
 #height evolution of parcel
 pl.figure(figsize=(12,8))
 pl.plot(t1,zp)
-pl.ylim(0,14000)    
+pl.ylim(0,16000)    
 pl.show()
 
 #rain event evolution
