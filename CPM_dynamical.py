@@ -6,6 +6,8 @@ Created on Fri Oct 05 08:12:20 2018
 """
 import numpy as np
 import matplotlib.pyplot as pl
+import matplotlib as mpl
+mpl.rcParams.update({'font.size': 21})
 
 #input of the model
 #constants
@@ -35,13 +37,13 @@ def Ls(T): #latent heat of sublimation water
 
 #time space
 tend=7200. #end of the simulation, s
-dt=1. #time step, s
+dt=0.1 #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 dz=1.
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
-mu=0.6e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
+mu=0.#0.9e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
 tau_warmpc = 90.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
@@ -49,7 +51,7 @@ tau_coldpc = 12.*60 #time scale for the formation of cold precipitation, 700 s i
 C_evap=1400. #rate constant for evaporation
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 withres=wLthres #threshold for precip form from ice
-Cconv = 1.00 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
+Cconv = 2.50 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 
 
 #%%
@@ -164,8 +166,8 @@ p[0] = p0(zp[0],dz)
 def dwdt(w,Tp,Tenv,wL): 
     return 1./(1.+gamma)*(g*((Tp-Tenv)/Tenv-wL-wi[i])-mu*abs(w)*w)
 
-def dTpdt(w,Tp,Tenv,zp,C,E,dwi):
-    return -g*w/cp-mu*abs(w)*(Tp-Tenv)+Lv(Tp)/cp*(C-E)+dwi*Lf/cp
+def dTpdt(w,Tp,Tenv,zp,C,E,dwidt):
+    return -g*w/cp-mu*abs(w)*(Tp-Tenv)+Lv(Tp)/cp*(C-E)+dwidt*Lf/cp
 
 def dwvpdt(w,wvp,wvenv,C,E):
     return -mu*(wvp-wvenv)*abs(w)-C+E
@@ -173,21 +175,21 @@ def dwvpdt(w,wvp,wvenv,C,E):
 def dpdt(rho,w):
     return -rho*g*w
 
-def dwLdt(w,C,E,wL,warm_precip,dwi):
-    return C-E-warm_precip-mu*wL*abs(w)-dwi
+def dwLdt(w,C,E,wL,warm_precip,dwidt):
+    return C-E-warm_precip-mu*wL*abs(w)-dwidt
 
 def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,wvp,wL]
     #extract values
     w,zp,Tp,wvp,wL=phi[1],phi[2],phi[3],phi[4],phi[5]
-    C,E,warm_precip,Tenv,wvenv,dwi=procarg[0],procarg[1],procarg[2],procarg[3],procarg[4],procarg[5]
+    C,E,warm_precip,Tenv,wvenv,dwidt=procarg[0],procarg[1],procarg[2],procarg[3],procarg[4],procarg[5]
 
     #do the diff eqs
     dp=dpdt(rho,w)*dt
     dw=dwdt(w,Tp,Tenv,wL)*dt
     dzp=w*dt
-    dTp=dTpdt(w,Tp,Tenv,zp,C,E,dwi)*dt
+    dTp=dTpdt(w,Tp,Tenv,zp,C,E,dwidt)*dt
     dwvp=dwvpdt(w,wvp,wvenv,C,E)*dt
-    dwL=dwLdt(w,C,E,wL,warm_precip,dwi)*dt
+    dwL=dwLdt(w,C,E,wL,warm_precip,dwidt)*dt
     return np.array([dp,dw,dzp,dTp,dwvp,dwL])
 
 #%% thermodynamic equilibria over water/ice surfaces
@@ -270,14 +272,14 @@ wvenv[0] = wvenvcalc(zp[0])
 sat[0] = wvp[0]/wvscalc(Tp[0],p[0])
 C[0] = condensation(wvp[0],wvscalc(Tp[0],p[0]))
 E[0] = evaporation(wvp[0],wvscalc(Tp[0],p[0]),0)
-dwi=0.
+dwidt=0.
 for i in range(len(t1)-1): 
     #do the gass law and hydrostatic equilibrium to calculate pressure and saturation
     # !! HERE WE STILL USE EULER FORWARD, HOWEVER PRESSURE IS NOT AS IMPORTANT AS THE OTHERS BECAUSE IT IS ONLY APPROX. NEEDED FOR CONDENSATION !!
     Tv = Tp[i]*(1+(wvp[i])/epsilon)/(1+wvp[i]) #virtual temp, from Aarnouts lecture notes
     rho = p[i]/(Rd*Tv) #gas law
     #Runge- Kutta numerical scheme 
-    processargs=np.array([C[i],E[i],warm_precip(wL[i],Tp[i]),Tenv[i],wvenv[i],dwi])
+    processargs=np.array([C[i],E[i],warm_precip(wL[i],Tp[i]),Tenv[i],wvenv[i],dwidt])
     phi=np.array([p[i],w[i],zp[i],Tp[i],wvp[i],wL[i]])
     k1,k2,k3,k4=np.zeros(6),np.zeros(6),np.zeros(6),np.zeros(6)
     k1[:]=func(phi, processargs,rho)
@@ -307,7 +309,7 @@ for i in range(len(t1)-1):
     C[i+1]=condensation(wvp[i+1],wvs)
     E[i+1]=evaporation(wvp[i+1],wvs,wL[i+1])
     wi[(i+1)]=Wi_depmeltfreez(Tp[i+1],p[i+1],rho,wL[i+1],dt)
-    dwi=wi[i+1]-wi[i]
+    dwidt=(wi[i+1]-wi[i])/dt
     
     #precipitation process of the clouds and remove the cold precip from ice parcels
     warm_prec=warm_precip(wL[i+1],Tp[i+1])
@@ -320,6 +322,7 @@ for i in range(len(t1)-1):
 gamma=0.0050 #skew T visualzation constant
 xticks=np.array([])
 z_plot=np.arange(0,15000,1000)
+pl.figure(figsize=(12,8))
 for i in range(193,310,5):
     pl.plot(i*np.ones(len(z_plot))+gamma*z_plot,z_plot,c=(0.6,0.6,0.6))
     if i > 260 and i < 300:
@@ -336,23 +339,30 @@ pl.xlabel('Temperature (degrees Celsius)')
 pl.ylabel('Height (m)')
 pl.show()
 
-#saturation evolution plot
-pl.plot(t1,sat)
-pl.show()
-
 #height evolution of parcel
+pl.figure(figsize=(12,8))
 pl.plot(t1,zp)
 pl.ylim(0,14000)    
 pl.show()
 
 #rain event evolution
+pl.figure(figsize=(12,8))
 pl.plot(t1,total_prec)
 pl.show()
 
 #cloud composition as function of temperature
-pl.plot(wL,Tp,label='Cloud liquid water')
-pl.plot(wi,Tp,label='Cloud ice')
-pl.legend()
+pl.figure(figsize=(12,8))
+pl.plot(wL,Tp,label='Cloud liquid water mixing ratio')
+pl.plot(wi,Tp,label='Cloud ice mixing ratio')
+pl.legend(loc=1)
+pl.xlabel('Mixing ratio (g/g)')
+pl.ylabel('Temperature (K)')
+pl.xlim(0,np.max(wv))
+pl.ylim(np.min(np.min(Tp)),np.max(Tp))
+pl.grid()
 pl.show()
 
+#velocity of the parcel
+pl.figure(figsize=(12,8))
 pl.plot(t1,w)
+pl.show()
