@@ -94,6 +94,7 @@ def find_nearest(array, value):
     array = np.asarray(array)
     idx = (np.abs(array - value)).argmin()
     return idx
+
 def Tenvcalc(h):
     i = find_nearest(z,h)
     if i == 0:
@@ -109,6 +110,7 @@ def Tenvcalc(h):
             dTdz=(T[i]-T[i-1])/(z[i]-z[i-1])  
         Tenv = T[i]+(h-z[i])*dTdz
     return Tenv
+
 def wvenvcalc(h):
      i = find_nearest(z,h)
      if i == 0:
