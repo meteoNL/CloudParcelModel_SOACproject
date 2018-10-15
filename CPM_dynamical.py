@@ -53,6 +53,11 @@ wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anth
 withres=wLthres #threshold for precip form from ice
 Cconv = 2.50 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 
+#profile drying constants 
+Cdry=np.array([1.00,0.50])
+zint=2000.
+i=0
+
 #%%
 #read background data from 20090526_00z_De_Bilt
 fn='20030602_12z_De_Bilt.txt'
@@ -65,8 +70,10 @@ for line in f:
     line=line.split(';')
     p_d = np.append(p_d, float(line[1])*100.) #read pressure and convert to Pa
     z = np.append(z, float(line[2])) #read height in meters
+    if z[-1] > zint:
+        i=1
     T = np.append(T, float(line[3])+T0) #read temperature and convert to Kelvin
-    wv = np.append(wv, float(line[6])/1000.) #read water vapor mixing ratio and convert to kg/kg
+    wv = np.append(wv, Cdry[i]*float(line[6])/1000.) #read water vapor mixing ratio and convert to kg/kg
 f.close()
 
 #%%
@@ -324,7 +331,6 @@ def Tdew(T,wv,p):
     relhum=wv/wvsloc
     relhum=relhum*100.
     H=(np.log10(relhum)-2.)/0.4343+(17.62*T)/(243.12+T)
-    print(H)
     Tdew=243.12*H/(17.62-H)
     return Tdew
 
