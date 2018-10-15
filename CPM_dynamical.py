@@ -358,7 +358,7 @@ pl.figure(figsize=(12,8))
 pl.title(fn[:-4]+' precipitation produced by CPM')
 pl.plot(t1,total_prec)
 pl.xlabel('Time (s)')
-pl.ylabel('Precipitation mixing ratio (g/g)')
+pl.ylabel('Cumulative precipitation mixing ratio (g/g)')
 pl.grid()
 pl.show()
 
