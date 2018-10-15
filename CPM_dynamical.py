@@ -54,8 +54,8 @@ withres=wLthres #threshold for precip form from ice
 Cconv = 2.50 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 
 #profile drying constants 
-Cdry=np.array([1.00,0.50])
-zint=2000.
+Cdry=np.array([1.00,1.00])
+zint=611.0
 i=0
 
 #%%
@@ -112,9 +112,10 @@ def Tenvcalc(h):
             Tenv = T[i]
         elif h > z[i]:
             dTdz=(T[i+1]-T[i])/(z[i+1]-z[i])
+            Tenv = T[i]+(h-z[i])*dTdz
         else:
             dTdz=(T[i]-T[i-1])/(z[i]-z[i-1])  
-        Tenv = T[i]+(h-z[i])*dTdz
+            Tenv = T[i]+(h-z[i])*dTdz
     return Tenv
 
 def wvenvcalc(h):
@@ -128,9 +129,10 @@ def wvenvcalc(h):
             wvenv = wv[i]
         elif h > z[i]:
             dwvdz=(wv[i+1]-wv[i])/(z[i+1]-z[i])
+            wvenv = wv[i]+(h-z[i])*dwvdz
         else:
             dwvdz=(wv[i]-wv[i-1])/(z[i]-z[i-1])  
-        wvenv = wv[i]+(h-z[i])*dwvdz
+            wvenv = wv[i]+(h-z[i])*dwvdz
     return wvenv
  
 def p0(zloc,dz):
@@ -158,8 +160,8 @@ def p0(zloc,dz):
 #%%
 #initial conditions
 Tp[0] = 299.15 #initial temperature of parcel, K
-zp[0] = 3. #initial height of parcel, m
-w[0] = 1 #initial velocity of parcel, m/s
+zp[0] = 4. #initial height of parcel, m
+w[0] = 0.1 #initial velocity of parcel, m/s
 wvp[0] = 15.8/1000. #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
