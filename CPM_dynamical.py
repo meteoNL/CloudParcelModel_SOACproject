@@ -53,22 +53,19 @@ wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anth
 withres=wLthres #threshold for precip form from ice
 Cconv = 2.50 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 
-
 #%%
 #read background data from 20090526_00z_De_Bilt
-fn='20090526_00z_De_Bilt.txt'
-f=open('20090526_00z_De_Bilt.txt','r')
+fn='20030602_12z_De_Bilt.txt'
+f=open(fn,'r')
 p_d = np.array([])
 z = np.array([])
 T = np.array([])
 wv = np.array([])
-Td=np.array([])
 for line in f:
     line=line.split(';')
     p_d = np.append(p_d, float(line[1])*100.) #read pressure and convert to Pa
     z = np.append(z, float(line[2])) #read height in meters
     T = np.append(T, float(line[3])+T0) #read temperature and convert to Kelvin
-    Td = np.append(Td,float(line[4])+T0)
     wv = np.append(wv, float(line[6])/1000.) #read water vapor mixing ratio and convert to kg/kg
 f.close()
 
@@ -153,10 +150,10 @@ def p0(zloc,dz):
 
 #%%
 #initial conditions
-Tp[0] = 288.5 #initial temperature of parcel, K
-zp[0] = 1500. #initial height of parcel, m
-w[0] = 1. #initial velocity of parcel, m/s
-wvp[0] = 10.9/1000. #mixing ratio of water vapor of parcel, kg/kg
+Tp[0] = 299.15 #initial temperature of parcel, K
+zp[0] = 4. #initial height of parcel, m
+w[0] = 0.5 #initial velocity of parcel, m/s
+wvp[0] = 15.8/1000. #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
 p[0] = p0(zp[0],dz)
@@ -320,6 +317,17 @@ for i in range(len(t1)-1):
 #%% visualization of results
 #plot temerature profile
 gamma=0.0050 #skew T visualzation constant
+
+def Tdew(T,wv,p):
+    #approximate dew point calculation from http://irtfweb.ifa.hawaii.edu/~tcs3/tcs3/Misc/Dewpoint_Calculation_Humidity_Sensor_E.pdf
+    wvsloc=wvscalc((T+T0),p)
+    relhum=wv/wvsloc
+    relhum=relhum*100.
+    H=(np.log10(relhum)-2.)/0.4343+(17.62*T)/(243.12+T)
+    print(H)
+    Tdew=243.12*H/(17.62-H)
+    return Tdew
+
 xticks=np.array([])
 z_plot=np.arange(0,18000,1000)
 pl.figure(figsize=(12,8))
@@ -328,7 +336,7 @@ for i in range(183,310,5):
     if i > 260 and i < 300:
         xticks=np.append(xticks,np.array([i]))
 pl.plot((Tp+gamma*zp),zp,c='r',label='Tp')
-pl.plot((Td+gamma*z),z,c='b',label='Tdew',ls='--')
+pl.plot((Tdew((T-T0),wv,p_d)+gamma*z+T0),z,c='b',label='Tdew',ls='--')
 pl.plot((T+gamma*z),z,c='g',label='Tenv')
 pl.title(fn[:-4])
 pl.xlim(260,300)
@@ -339,15 +347,13 @@ pl.xlabel('Temperature (degrees Celsius)')
 pl.ylabel('Height (m)')
 pl.show()
 
-#height evolution of parcel
-pl.figure(figsize=(12,8))
-pl.plot(t1,zp)
-pl.ylim(0,16000)    
-pl.show()
-
 #rain event evolution
 pl.figure(figsize=(12,8))
+pl.title(fn[:-4]+' precipitation produced by CPM')
 pl.plot(t1,total_prec)
+pl.xlabel('Time (s)')
+pl.ylabel('Precipitation mixing ratio (g/g)')
+pl.grid()
 pl.show()
 
 #cloud composition as function of temperature
@@ -360,6 +366,12 @@ pl.ylabel('Temperature (K)')
 pl.xlim(0,np.max(wv))
 pl.ylim(np.min(np.min(Tp)),np.max(Tp))
 pl.grid()
+pl.show()
+
+#height evolution of parcel
+pl.figure(figsize=(12,8))
+pl.plot(t1,zp)
+pl.ylim(0,16000)    
 pl.show()
 
 #velocity of the parcel
