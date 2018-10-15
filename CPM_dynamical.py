@@ -37,13 +37,13 @@ def Ls(T): #latent heat of sublimation water
 
 #time space
 tend=7200. #end of the simulation, s
-dt=0.2 #time step, s
+dt=0.4 #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 dz=0.1
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
-mu=0#0.9e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
+mu=0.9e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
 tau_warmpc = 90.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
@@ -219,13 +219,13 @@ def esicalc(T,p):#calculation of water vapor saturation mixing ratio
 #processes: phase changes
 def condensation(wv,wvs):
     if wv > wvs:
-        return (wv-wvs)*(1-np.exp(-1/tau_cond*dt))
+        return (wv-wvs)*(1-np.exp(-dt/tau_cond))/dt
     else:
         return 0.00
 
 def evaporation(wv,wvs,wL):
     if wvs > wv and wL>0:
-        return C_evap*wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))
+        return C_evap*wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))/dt
     else:
         return 0.00
 
@@ -366,11 +366,3 @@ pl.show()
 pl.figure(figsize=(12,8))
 pl.plot(t1,w)
 pl.show()
-
-pl.plot(wvp)
-pl.plot(wvscalc(Tp[:],p[:]))
-pl.plot(sat/1000)
-pl.show()
-
-pl.plot(t1[7000:],wvp[7000:])
-pl.plot(t1[7000:],wvscalc(Tp[7000:],p[7000:]))
