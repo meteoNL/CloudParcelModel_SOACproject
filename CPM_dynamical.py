@@ -102,12 +102,12 @@ def find_nearest(array, value):
     return idx
 
 def Tenvcalc(h):
-    i = find_nearest(z,h)
-    if i == 0:
+    if h<=z[0]:
         Tenv = T[0]
-    elif i == len(z):
-        Tenv = 300
-    else:
+    elif h>=z[-1]:
+        Tenv = T[-1]
+    else: 
+        i = find_nearest(z,h)
         if h == z[i]:
             Tenv = T[i]
         elif h > z[i]:
@@ -118,12 +118,12 @@ def Tenvcalc(h):
     return Tenv
 
 def wvenvcalc(h):
-     i = find_nearest(z,h)
-     if i == 0:
+    if h<=z[0]:
         wvenv = wv[0]
-     elif i == len(z):
-        wvenv = 0
-     else:
+    elif h>=z[-1]:
+        wvenv = wv[-1]
+    else:  
+        i = find_nearest(z,h)
         if h == z[i]:
             wvenv = wv[i]
         elif h > z[i]:
@@ -131,7 +131,7 @@ def wvenvcalc(h):
         else:
             dwvdz=(wv[i]-wv[i-1])/(z[i]-z[i-1])  
         wvenv = wv[i]+(h-z[i])*dwvdz
-     return wvenv
+    return wvenv
  
 def p0(zloc,dz):
     #locate layer in which parcel is
@@ -158,8 +158,8 @@ def p0(zloc,dz):
 #%%
 #initial conditions
 Tp[0] = 299.15 #initial temperature of parcel, K
-zp[0] = 4. #initial height of parcel, m
-w[0] = 0.5 #initial velocity of parcel, m/s
+zp[0] = 3. #initial height of parcel, m
+w[0] = 1 #initial velocity of parcel, m/s
 wvp[0] = 15.8/1000. #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
