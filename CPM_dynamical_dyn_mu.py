@@ -49,7 +49,7 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Rinit=1200. #initial CP radius
+Rinit=900. #initial CP radius
 Tdis=2.2
 wvdis=0.000
 winit=0.0
