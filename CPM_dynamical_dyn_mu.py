@@ -49,10 +49,10 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Rinit=900. #initial CP radius
-Tdis=2.2
-wvdis=0.000
-winit=0.0
+Rinit=1000. #initial CP radius
+Tdis=3.
+wvdis=-0.000
+winit=0.
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
@@ -185,10 +185,10 @@ def meanenvcalc(bottom,top,name):
             values[i]=wvenvcalc(levels[i])
     return np.mean(values)
     
-Tp[0] = meanenvcalc(0,Rinit,'Tenv')+Tdis #initial temperature of parcel, K
-zp[0] = Rinit/2. #initial height of parcel, m
+Tp[0] = meanenvcalc(0,Rinit*2.,'Tenv')+Tdis #initial temperature of parcel, K
+zp[0] = Rinit #initial height of parcel, m
 w[0] = winit #initial velocity of parcel, m/s
-wvp[0] = meanenvcalc(0,Rinit,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
+wvp[0] = meanenvcalc(0,Rinit*2.,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
 p[0] = p0(zp[0],dz)
@@ -261,7 +261,7 @@ def condensation(wv,wvs):
 
 def evaporation(wv,wvs,wL):
     if wvs > wv and wL>0:
-        return C_evap*wL*(wvs-wv)*((1-np.exp(-1/tau_evap*dt)))/dt
+        return C_evap*wL*(wvs-wv)*((1-np.exp(-dt/tau_evap)))/dt
     else:
         return 0.00
 
@@ -299,7 +299,6 @@ def cold_precip(wL,wi):
         return result1
     else:
         return 0.00
-    return 0.00
     
 #%%Integration procedure
 t=t1[0]
@@ -361,7 +360,8 @@ for i in range(len(t1)-1):
     cold_prec=cold_precip(wL[i+1],wi[i+1])
     wi[i+1]=wi[i+1]-cold_prec
     total_prec[i+1]=total_prec[i]+warm_prec+cold_prec #update total precipitation
-    
+#integrate precipitation and divide by areal extent
+total_prec_mm=np.round(np.dot((total_prec[1:]-total_prec[:-1]),Mp[:-1])/(np.pi*Rp[-2]**2),2)    
 #%% visualization of results
 #plot temerature profile
 gamma=0.0050 #skew T visualzation constant
@@ -401,6 +401,9 @@ pl.plot(t1,total_prec)
 pl.xlabel('Time (s)')
 pl.ylabel('Cumulative precipitation mixing ratio (g/g)')
 pl.grid()
+maxaxis=np.round(0.5+1000*total_prec[-1]*1.2,0)/1000.
+pl.ylim(0,maxaxis)
+pl.text(0,-.16*maxaxis,'Areal mean total precipitation: '+str(total_prec_mm)+' mm')
 pl.show()
 
 #cloud composition as function of temperature
