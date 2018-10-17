@@ -28,7 +28,7 @@ rhoi = 700. #density of ice cristal, kg/m3
 #entrainment parameterization
 def mu_calc(R):
     #this is based on reading in the provided material
-    Cinvr=0.1
+    Cinvr=0.16
     startvalue=5e-5
     return Cinvr/R+startvalue
 
@@ -49,8 +49,8 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Rinit=800. #initial CP radius
-Tdis=2.5
+Rinit=1200. #initial CP radius
+Tdis=2.2
 wvdis=0.000
 winit=0.0
 
@@ -215,7 +215,7 @@ def dmdt(mu,w,m):
 
 def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,wvp,wL]
     #extract values
-    m,w,zp,Tp,wvp,wL=phi[1],phi[2],phi[3],phi[4],phi[5],phi[6]
+    m,w,zp,Tp,wvp,wL=phi[0],phi[2],phi[3],phi[4],phi[5],phi[6]
     C,E,warm_precip,Tenv,wvenv,dwidt=procarg[0],procarg[1],procarg[2],procarg[3],procarg[4],procarg[5]
 
     #do the diff eqs
