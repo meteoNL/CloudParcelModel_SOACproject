@@ -50,6 +50,7 @@ dz=0.1
 
 #initial parcel characterstics
 Rinit=1000. #initial CP radius
+parcel_bottom=1000.
 Tdis=3.
 wvdis=-0.000
 winit=0.
@@ -73,7 +74,7 @@ i=0
 
 #%%
 #read background data from 20090526_00z_De_Bilt
-fn='20030602_12z_De_Bilt.txt'
+fn='20090526_00z_De_Bilt.txt'
 f=open(fn,'r')
 p_d = np.array([])
 z = np.array([])
@@ -185,10 +186,10 @@ def meanenvcalc(bottom,top,name):
             values[i]=wvenvcalc(levels[i])
     return np.mean(values)
     
-Tp[0] = meanenvcalc(0,Rinit*2.,'Tenv')+Tdis #initial temperature of parcel, K
-zp[0] = Rinit #initial height of parcel, m
+Tp[0] = meanenvcalc(parcel_bottom,parcel_bottom+Rinit*2.,'Tenv')+Tdis #initial temperature of parcel, K
+zp[0] = parcel_bottom+Rinit #initial height of parcel, m
 w[0] = winit #initial velocity of parcel, m/s
-wvp[0] = meanenvcalc(0,Rinit*2.,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
+wvp[0] = meanenvcalc(parcel_bottom,parcel_bottom+Rinit*2.,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
 p[0] = p0(zp[0],dz)
