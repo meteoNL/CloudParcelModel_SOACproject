@@ -48,10 +48,15 @@ dt=0.4 #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 dz=0.1
 
+#initial parcel characterstics
+Rinit=800. #initial CP radius
+Tdis=1.0
+wvdis=0.000
+winit=0.0
+
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
 #mu=0.9e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
-Rinit=500. #initial CP radius
 tau_cond = 30. #time scale for condensation, s
 tau_evap = 30. #time scale for evaporation, s
 tau_warmpc = 90.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
@@ -170,10 +175,10 @@ def p0(zloc,dz):
 
 #%%
 #initial conditions
-Tp[0] = 299.15 #initial temperature of parcel, K
-zp[0] = 4. #initial height of parcel, m
-w[0] = 0.1 #initial velocity of parcel, m/s
-wvp[0] = 15.8/1000. #mixing ratio of water vapor of parcel, kg/kg
+Tp[0] = Tenvcalc(Rinit/2.)+Tdis #initial temperature of parcel, K
+zp[0] = Rinit/2. #initial height of parcel, m
+w[0] = winit #initial velocity of parcel, m/s
+wvp[0] = wvenvcalc(Rinit/2.)+wvdis #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
 p[0] = p0(zp[0],dz)
