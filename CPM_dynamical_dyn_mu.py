@@ -49,10 +49,10 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Rinit=1000. #initial CP radius
-parcel_bottom=1000.
-Tdis=3.
-wvdis=-0.000
+Rinit=800. #initial CP radius
+parcel_bottom=0.
+Tdis=4.
+wvdis=3e-3
 winit=0.
 
 #parameters 
@@ -74,7 +74,7 @@ i=0
 
 #%%
 #read background data from 20090526_00z_De_Bilt
-fn='20090526_00z_De_Bilt.txt'
+fn='20030602_12z_De_Bilt.txt'
 f=open(fn,'r')
 p_d = np.array([])
 z = np.array([])
@@ -412,6 +412,7 @@ pl.figure(figsize=(12,8))
 pl.plot(wL,Tp,label='Cloud liquid water mixing ratio')
 pl.plot(wi,Tp,label='Cloud ice mixing ratio')
 pl.legend(loc=1)
+pl.title('Cloud content and temperature')
 pl.xlabel('Mixing ratio (g/g)')
 pl.ylabel('Temperature (K)')
 pl.xlim(0,np.max(wv))
@@ -421,7 +422,13 @@ pl.show()
 
 #height evolution of parcel
 pl.figure(figsize=(12,8))
-pl.plot(t1,zp)
+pl.plot(t1,zp,label='Model parcel height')
+pl.plot(t1,(zp-Rp),label='Pseudo-top model parcel')
+pl.plot(t1,(zp+Rp),label='Pseudo-bottom model parcel')
+pl.legend()
+pl.title('Cloud parcels\' path ')
+pl.xlabel('Time (s)')
+pl.ylabel('z (m)')
 pl.ylim(0,16000)    
 pl.show()
 
