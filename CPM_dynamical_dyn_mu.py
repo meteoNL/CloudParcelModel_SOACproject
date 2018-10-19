@@ -169,7 +169,7 @@ def p0(zloc,dz):
         zval+=0.5*dz
         Tloc=Tenvcalc(zval)
         wvloc=wvenvcalc(zval)
-        Tvloc=Tloc*(1+(wvloc)/epsilon)/(1+wvloc) #from Aarnouts lecture notes
+        Tvloc=Tvcalc(Tloc,wvloc)#*(1+(wvloc)/epsilon)/(1+wvloc) #from Aarnouts lecture notes
         rho = pref/(Rd*Tvloc)
         dpdz=-rho*g
         pref+=dpdz*dz
