@@ -24,13 +24,6 @@ es1=611.20 #saturation vapor pressure over ice at tripel point
 epsilon=0.622 #molar mass ratio water and dry air
 Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700. #density of ice cristal, kg/m3
-Cinvr=0.16
-mu0=5e-5
-
-#entrainment parameterization
-def mu_calc(R):
-    #this is based on reading in the provided material
-    return Cinvr/R+mu0
 
 #pseudoconstants
 def chi(p): #diffusivity of water vapor
@@ -67,6 +60,13 @@ C_evap=1400. #rate constant for evaporation
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 withres=wLthres #threshold for precip form from ice
 Cconv = 10.5 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
+Cinvr=0.16
+mu0=5e-5
+
+#entrainment parameterization
+def mu_calc(R):
+    #this is based on reading in the provided material
+    return Cinvr/R+mu0
 
 #profile drying constants , 1.00 in any layer means no drying and zint is the interface between the first and second layer
 Cdry=np.array([1.00,1.00])
