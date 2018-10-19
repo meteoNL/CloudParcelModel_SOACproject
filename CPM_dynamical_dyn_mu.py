@@ -179,7 +179,7 @@ def p0(zloc,dz):
 #%%
 #initial conditions
 def meanenvcalc(bottom,top,name):
-    levels=np.linspace(bottom,top+1e-5,51)
+    levels=np.linspace(bottom,top+1e-12,51)
     values=np.zeros(len(levels))
     for i in range(len(levels)):
         if name=='Tenv':
