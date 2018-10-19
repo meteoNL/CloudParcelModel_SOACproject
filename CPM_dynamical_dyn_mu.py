@@ -50,9 +50,9 @@ dz=0.1
 
 #initial parcel characterstics
 Rinit=800. #initial CP radius
-parcel_bottom=0.
-Tdis=4.
-wvdis=3e-3
+parcel_bottom=100.
+Tdis=1.9
+wvdis=0.75e-3
 winit=0.
 
 #parameters 
@@ -74,7 +74,7 @@ i=0
 
 #%%
 #read background data from 20090526_00z_De_Bilt
-fn='20030602_12z_De_Bilt.txt'
+fn='20100826_12z_Essen_mod.txt'
 f=open(fn,'r')
 p_d = np.array([])
 z = np.array([])
@@ -186,10 +186,10 @@ def meanenvcalc(bottom,top,name):
             values[i]=wvenvcalc(levels[i])
     return np.mean(values)
     
-Tp[0] = meanenvcalc(parcel_bottom,parcel_bottom+Rinit*2.,'Tenv')+Tdis #initial temperature of parcel, K
 zp[0] = parcel_bottom+Rinit #initial height of parcel, m
+Tp[0] = meanenvcalc(parcel_bottom,parcel_bottom+2*Rinit,'Tenv')+Tdis #initial temperature of parcel, K
 w[0] = winit #initial velocity of parcel, m/s
-wvp[0] = meanenvcalc(parcel_bottom,parcel_bottom+Rinit*2.,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
+wvp[0] = meanenvcalc(parcel_bottom,parcel_bottom+2*Rinit,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
 p[0] = p0(zp[0],dz)
@@ -423,8 +423,8 @@ pl.show()
 #height evolution of parcel
 pl.figure(figsize=(12,8))
 pl.plot(t1,zp,label='Model parcel height')
-pl.plot(t1,(zp-Rp),label='Pseudo-top model parcel')
-pl.plot(t1,(zp+Rp),label='Pseudo-bottom model parcel')
+pl.plot(t1,(zp-Rp),label='Pseudo-bottom model parcel')
+pl.plot(t1,(zp+Rp),label='Pseudo-top model parcel')
 pl.legend()
 pl.title('Cloud parcels\' path ')
 pl.xlabel('Time (s)')
