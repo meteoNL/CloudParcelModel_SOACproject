@@ -44,7 +44,8 @@ dz=0.1
 #initial parcel characterstics
 Riniteq=4437. #initial CP radius
 parcel_bottom=150.
-parcel_top=parcel_bottom+0.
+ntop=0.
+parcel_top=parcel_bottom+ntop*Riniteq
 Tdis=0.4
 wvdis=0.2e-3
 winit=0.
@@ -187,7 +188,7 @@ def meanenvcalc(bottom,top,name):
             values[i]=wvenvcalc(levels[i])
     return np.mean(values)
     
-zp[0] = parcel_bottom #initial height of parcel, m
+zp[0] = parcel_bottom+0.5*(parcel_top-parcel_bottom) #initial height of parcel, m
 Tp[0] = meanenvcalc(parcel_bottom,parcel_top,'Tenv')+Tdis #initial temperature of parcel, K
 w[0] = winit #initial velocity of parcel, m/s
 wvp[0] = meanenvcalc(parcel_bottom,parcel_top,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
