@@ -49,7 +49,7 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Rinit=4500. #initial CP radius
+Riniteq=4480. #initial CP radius
 parcel_bottom=150.
 Tdis=0.4
 wvdis=0.2e-3
@@ -314,7 +314,7 @@ wvenv[0] = wvenvcalc(zp[0])
 sat[0] = wvp[0]/wvscalc(Tp[0],p[0])
 C[0] = condensation(wvp[0],wvscalc(Tp[0],p[0]))
 E[0] = evaporation(wvp[0],wvscalc(Tp[0],p[0]),0)
-Rp[0] = Rinit
+Rp[0] = Riniteq
 mup[0] = mu_calc(Rp[0])
 Tv = Tvcalc(Tp[0],wvp[0])#*(1+(wvp[0])/epsilon)/(1+wvp[0]) #virtual temp, from Aarnouts lecture note
 rho = p[0]/(Rd*Tv) #gas law
