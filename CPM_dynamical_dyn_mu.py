@@ -49,8 +49,9 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Riniteq=4480. #initial CP radius
+Riniteq=4437. #initial CP radius
 parcel_bottom=150.
+parcel_top=parcel_bottom+0.
 Tdis=0.4
 wvdis=0.2e-3
 winit=0.
@@ -187,9 +188,9 @@ def meanenvcalc(bottom,top,name):
     return np.mean(values)
     
 zp[0] = parcel_bottom #initial height of parcel, m
-Tp[0] = meanenvcalc(parcel_bottom,parcel_bottom,'Tenv')+Tdis #initial temperature of parcel, K
+Tp[0] = meanenvcalc(parcel_bottom,parcel_top,'Tenv')+Tdis #initial temperature of parcel, K
 w[0] = winit #initial velocity of parcel, m/s
-wvp[0] = meanenvcalc(parcel_bottom,parcel_bottom,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
+wvp[0] = meanenvcalc(parcel_bottom,parcel_top,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
 p[0] = p0(zp[0],dz)
@@ -322,7 +323,6 @@ Mp[0] = (4./3*Rp[0]**3)*rho
 dwidt=0.
 for i in range(len(t1)-1): 
     #do the gass law and hydrostatic equilibrium to calculate pressure and saturation
-    # !! HERE WE STILL USE EULER FORWARD, HOWEVER PRESSURE IS NOT AS IMPORTANT AS THE OTHERS BECAUSE IT IS ONLY APPROX. NEEDED FOR CONDENSATION !!
     Tv = Tvcalc(Tp[i],wvp[i])# Tp[i]*(1+(wvp[i])/epsilon)/(1+wvp[i]) #virtual temp, from Aarnouts lecture notes
     rho = p[i]/(Rd*Tv) #gas law
     Rp[i]=(3./4*Mp[i]/rho)**(1./3)
