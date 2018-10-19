@@ -24,13 +24,13 @@ es1=611.20 #saturation vapor pressure over ice at tripel point
 epsilon=0.622 #molar mass ratio water and dry air
 Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700. #density of ice cristal, kg/m3
+Cinvr=0.16
+mu0=5e-5
 
 #entrainment parameterization
 def mu_calc(R):
     #this is based on reading in the provided material
-    Cinvr=0.16
-    startvalue=5e-5
-    return Cinvr/R+startvalue
+    return Cinvr/R+mu0
 
 #pseudoconstants
 def chi(p): #diffusivity of water vapor
@@ -49,27 +49,27 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Rinit=800. #initial CP radius
-parcel_bottom=100.
-Tdis=1.9
-wvdis=0.75e-3
+Rinit=4500. #initial CP radius
+parcel_bottom=150.
+Tdis=0.4
+wvdis=0.2e-3
 winit=0.
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
 #mu=0.9e-4 #entrainment of air: R.A. Anthes (1977) gives 0.183/radius as its value
-tau_cond = 30. #time scale for condensation, s
-tau_evap = 30. #time scale for evaporation, s
+tau_cond = 5. #time scale for condensation, s
+tau_evap = 5. #time scale for evaporation, s
 tau_warmpc = 90.*60 #time scale for the formation of warm precipitation, s, 1000 s in Anthes (1977); the idea appears to be from Kessler (1969)
 tau_coldpc = 12.*60 #time scale for the formation of cold precipitation, 700 s in ECMWF doc mentioned
 C_evap=1400. #rate constant for evaporation
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 withres=wLthres #threshold for precip form from ice
-Cconv = 2.50 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
+Cconv = 10.5 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 
 #profile drying constants , 1.00 in any layer means no drying and zint is the interface between the first and second layer
 Cdry=np.array([1.00,1.00])
-zint=611.0
+zint=2000.0
 i=0
 
 #%%
@@ -186,18 +186,20 @@ def meanenvcalc(bottom,top,name):
             values[i]=wvenvcalc(levels[i])
     return np.mean(values)
     
-zp[0] = parcel_bottom+Rinit #initial height of parcel, m
-Tp[0] = meanenvcalc(parcel_bottom,parcel_bottom+2*Rinit,'Tenv')+Tdis #initial temperature of parcel, K
+zp[0] = parcel_bottom #initial height of parcel, m
+Tp[0] = meanenvcalc(parcel_bottom,parcel_bottom,'Tenv')+Tdis #initial temperature of parcel, K
 w[0] = winit #initial velocity of parcel, m/s
-wvp[0] = meanenvcalc(parcel_bottom,parcel_bottom+2*Rinit,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
+wvp[0] = meanenvcalc(parcel_bottom,parcel_bottom,'wvenv')+wvdis #mixing ratio of water vapor of parcel, kg/kg
 wL[0] = 0. #cloud content
 total_prec[0] = 0.
 p[0] = p0(zp[0],dz)
 
 #%%
 #differential equations
-def dwdt(w,Tp,Tenv,wL): 
-    return 1./(1.+gamma)*(g*((Tp-Tenv)/Tenv-wL-wi[i])-mu*abs(w)*w)
+def dwdt(w,Tp,Tenv,wvp,wvenv,wL): 
+    Tvp=Tvcalc(Tp,wvp)
+    Tvenv=Tvcalc(Tenv,wvenv)
+    return 1./(1.+gamma)*(g*((Tvp-Tvenv)/Tvenv-wL-wi[i])-mu*abs(w)*w)
 
 def dTpdt(w,Tp,Tenv,zp,C,E,dwidt):
     return -g*w/cp-mu*abs(w)*(Tp-Tenv)+Lv(Tp)/cp*(C-E)+dwidt*Lf/cp
@@ -222,7 +224,7 @@ def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,w
     #do the diff eqs
     dm=dmdt(mu,w,m)*dt
     dp=dpdt(rho,w)*dt
-    dw=dwdt(w,Tp,Tenv,wL)*dt
+    dw=dwdt(w,Tp,Tenv,wvp,wvenv,wL)*dt
     dzp=w*dt
     dTp=dTpdt(w,Tp,Tenv,zp,C,E,dwidt)*dt
     dwvp=dwvpdt(w,wvp,wvenv,C,E)*dt
@@ -251,6 +253,10 @@ def esicalc(T,p):#calculation of water vapor saturation mixing ratio
     lnesi=difflnesi+np.log(es1)
     esi = np.exp(lnesi)
     return esi
+
+def Tvcalc(T,wv):
+    #virtual temp, from Aarnouts lecture notes
+    return T*(1+(wv)/epsilon)/(1+wv)
 
 #%%
 #processes: phase changes
@@ -310,14 +316,14 @@ C[0] = condensation(wvp[0],wvscalc(Tp[0],p[0]))
 E[0] = evaporation(wvp[0],wvscalc(Tp[0],p[0]),0)
 Rp[0] = Rinit
 mup[0] = mu_calc(Rp[0])
-Tv = Tp[0]*(1+(wvp[0])/epsilon)/(1+wvp[0]) #virtual temp, from Aarnouts lecture note
+Tv = Tvcalc(Tp[0],wvp[0])#*(1+(wvp[0])/epsilon)/(1+wvp[0]) #virtual temp, from Aarnouts lecture note
 rho = p[0]/(Rd*Tv) #gas law
 Mp[0] = (4./3*Rp[0]**3)*rho
 dwidt=0.
 for i in range(len(t1)-1): 
     #do the gass law and hydrostatic equilibrium to calculate pressure and saturation
     # !! HERE WE STILL USE EULER FORWARD, HOWEVER PRESSURE IS NOT AS IMPORTANT AS THE OTHERS BECAUSE IT IS ONLY APPROX. NEEDED FOR CONDENSATION !!
-    Tv = Tp[i]*(1+(wvp[i])/epsilon)/(1+wvp[i]) #virtual temp, from Aarnouts lecture notes
+    Tv = Tvcalc(Tp[i],wvp[i])# Tp[i]*(1+(wvp[i])/epsilon)/(1+wvp[i]) #virtual temp, from Aarnouts lecture notes
     rho = p[i]/(Rd*Tv) #gas law
     Rp[i]=(3./4*Mp[i]/rho)**(1./3)
     mu=mu_calc(Rp[i])
