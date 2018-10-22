@@ -36,8 +36,8 @@ def Ls(T): #latent heat of sublimation water
     return Lf+ Lv(T)
 
 #time space
-tend=25200. #end of the simulation, s
-dt=0.4 #time step, s
+tend=18000. #end of the simulation, s
+dt=0.1 #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 dz=0.1
 
