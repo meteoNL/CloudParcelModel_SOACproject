@@ -60,7 +60,7 @@ tau_coldpc = 12.*60 #time scale for the formation of cold precipitation, 700 s i
 C_evap=1400. #rate constant for evaporation
 wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anthes (1977)
 withres=wLthres #threshold for precip form from ice
-Cconv = 10.5 #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
+Cconv = 10. #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 Cinvr=0.16
 mu0=5e-5
 
