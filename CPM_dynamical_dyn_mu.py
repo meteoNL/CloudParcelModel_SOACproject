@@ -36,7 +36,7 @@ def Ls(T): #latent heat of sublimation water
     return Lf+ Lv(T)
 
 #time space
-tend=7200. #end of the simulation, s
+tend=25200. #end of the simulation, s
 dt=0.4 #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
 dz=0.1
@@ -44,7 +44,7 @@ dz=0.1
 #initial parcel characterstics
 Riniteq=2500. #initial CP radius
 parcel_bottom=150.
-ntop=0.
+ntop=0.0
 parcel_top=parcel_bottom+ntop*Riniteq
 Tdis=0.4
 wvdis=0.2e-3
@@ -68,6 +68,7 @@ mu0=5e-5
 def mu_calc(R):
     #this is based on reading in the provided material
     return Cinvr/R+mu0
+   # return 0.00
 
 #profile drying constants , 1.00 in any layer means no drying and zint is the interface between the first and second layer
 Cdry=np.array([1.00,1.00])
@@ -296,7 +297,7 @@ def Wi_depmeltfreez(T,p,rho,wL,dt):
 #%% precipitation processes
 #warm precipitation (mainly autoconversion simulation)
 def warm_precip(wL,Tp):
-    if wL > wLthres and Tp > T0:
+    if wL > wLthres:
         return (wL-wLthres)*(1-np.exp(-dt/tau_warmpc))
     else:
         return 0.0
@@ -372,7 +373,7 @@ for i in range(len(t1)-1):
 total_prec_mm=np.round(np.dot((total_prec[1:]-total_prec[:-1]),Mp[:-1])/(np.pi*Rp[-2]**2),2)    
 #%% visualization of results
 #plot temerature profile
-gamma=0.0050 #skew T visualzation constant
+Tgamma=0.0050 #skew T visualzation constant
 
 def Tdew(T,wv,p):
     #approximate dew point calculation from http://irtfweb.ifa.hawaii.edu/~tcs3/tcs3/Misc/Dewpoint_Calculation_Humidity_Sensor_E.pdf
@@ -393,13 +394,13 @@ xticks=np.array([])
 z_plot=np.arange(0,18000,1000)
 pl.figure(figsize=(12,8))
 for i in range(183,310,5):
-    pl.plot(i*np.ones(len(z_plot))+gamma*z_plot,z_plot,c=(0.6,0.6,0.6))
+    pl.plot(i*np.ones(len(z_plot))+Tgamma*z_plot,z_plot,c=(0.6,0.6,0.6))
     if i > 260 and i < 300:
         xticks=np.append(xticks,np.array([i]))
-pl.plot((Tp+gamma*zp),zp,c='r',label='Tp')
-dew=(Tdew((T-T0),wv,p_d)+gamma*z+T0)
+pl.plot((Tp+Tgamma*zp),zp,c='r',label='Tp')
+dew=(Tdew((T-T0),wv,p_d)+Tgamma*z+T0)
 pl.plot(dew,z,c='b',label='Tdew',ls='--')
-pl.plot((T+gamma*z),z,c='g',label='Tenv')
+pl.plot((T+Tgamma*z),z,c='g',label='Tenv')
 pl.title(fn[:-4])
 pl.xlim(260,300)
 pl.xticks(xticks,(xticks-273))
@@ -425,6 +426,8 @@ pl.show()
 pl.figure(figsize=(12,8))
 pl.plot(wL,Tp,label='Cloud liquid water mixing ratio')
 pl.plot(wi,Tp,label='Cloud ice mixing ratio')
+pl.plot(np.ones(len(Tp))*wLthres,Tp,ls='--',c='b',label='Warm precipitation threshold')
+pl.plot(np.ones(len(Tp))*withres,Tp,ls=':',c='r',label='Cold precipitation threshold')
 pl.legend(loc=1)
 pl.title('Cloud content and temperature')
 pl.xlabel('Mixing ratio (g/g)')
