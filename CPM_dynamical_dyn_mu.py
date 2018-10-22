@@ -437,6 +437,22 @@ pl.ylim(np.min(np.min(Tp)),np.max(Tp))
 pl.grid()
 pl.show()
 
+#cloud composition as function of time
+pl.figure(figsize=(12,8))
+pl.plot(t1,wL,label='Cloud liquid water mixing ratio')
+pl.plot(t1,wi,label='Cloud ice mixing ratio')
+pl.plot(t1,wi+wL,label='Ice + liquid water mixing ratio',c=(0.4,0.4,0.4))
+pl.plot(t1,np.ones(len(Tp))*wLthres,ls='--',c='b',label='Warm precipitation threshold')
+pl.plot(t1,np.ones(len(Tp))*withres,ls=':',c='r',label='Cold precipitation threshold')
+pl.legend(loc=1)
+pl.title('Cloud content and temperature')
+pl.ylabel('Mixing ratio (g/g)')
+pl.xlabel('time (s)')
+pl.ylim(0,np.max(wv))
+pl.xlim(0,np.max(t1))
+pl.grid()
+pl.show()
+
 #height evolution of parcel
 pl.figure(figsize=(12,8))
 pl.plot(t1,zp,label='Model parcel height')
