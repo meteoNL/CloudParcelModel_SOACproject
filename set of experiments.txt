@@ -1,0 +1,7 @@
+From the standard run:
+- Riniteq: [10,100,500,2500,5000]
+- Cinvr: [0.04,0.08,0.12,0.16,0.20,0.24]
+- mu0: [0, 5e-5]
+- Cconv: [1.,2.5,5.,10.,20.,50.]
+- upper air drying: [0.01,0.50,0.80,1.00]
+- time scales of evaporation, condensation, warm & cold precipitation
