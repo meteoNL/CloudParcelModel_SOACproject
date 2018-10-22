@@ -42,7 +42,7 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Riniteq=4437. #initial CP radius
+Riniteq=2500. #initial CP radius
 parcel_bottom=150.
 ntop=0.
 parcel_top=parcel_bottom+ntop*Riniteq
@@ -376,8 +376,14 @@ gamma=0.0050 #skew T visualzation constant
 
 def Tdew(T,wv,p):
     #approximate dew point calculation from http://irtfweb.ifa.hawaii.edu/~tcs3/tcs3/Misc/Dewpoint_Calculation_Humidity_Sensor_E.pdf
+    Tdew=np.ones(len(T))
     wvsloc=wvscalc((T+T0),p)
-    relhum=wv/wvsloc
+    
+    #prevent run towards minus infinity for the log number
+    wv[wv==0.]=1e-7
+    
+    #continue calculations
+    relhum=wv[wv>0.]/wvsloc
     relhum=relhum*100.
     H=(np.log10(relhum)-2.)/0.4343+(17.62*T)/(243.12+T)
     Tdew=243.12*H/(17.62-H)
@@ -391,7 +397,8 @@ for i in range(183,310,5):
     if i > 260 and i < 300:
         xticks=np.append(xticks,np.array([i]))
 pl.plot((Tp+gamma*zp),zp,c='r',label='Tp')
-pl.plot((Tdew((T-T0),wv,p_d)+gamma*z+T0),z,c='b',label='Tdew',ls='--')
+dew=(Tdew((T-T0),wv,p_d)+gamma*z+T0)
+pl.plot(dew,z,c='b',label='Tdew',ls='--')
 pl.plot((T+gamma*z),z,c='g',label='Tenv')
 pl.title(fn[:-4])
 pl.xlim(260,300)
