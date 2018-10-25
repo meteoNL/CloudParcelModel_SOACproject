@@ -67,7 +67,7 @@ mu0=5e-5
 def mu_calc(R):
     #this is based on reading in the provided material
     return Cinvr/R+mu0
-   # return 0.00
+    #return 0.00
 
 #profile drying constants , 1.00 in any layer means no drying and zint is the interface between the first and second layer
 Cdry=np.array([1.00,1.00])
