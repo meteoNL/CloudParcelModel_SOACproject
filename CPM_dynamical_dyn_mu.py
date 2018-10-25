@@ -63,7 +63,6 @@ withres=wLthres #threshold for precip form from ice
 Cconv = 10. #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 Cinvr=0.16
 mu0=5e-5
-
 #entrainment parameterization
 def mu_calc(R):
     #this is based on reading in the provided material
