@@ -212,8 +212,8 @@ def dwvpdt(w,wvp,wvenv,C,E):
 def dpdt(rho,w):
     return -rho*g*w
 
-def dwLdt(w,C,E,wL):
-    return C-E-mu*wL*abs(w)
+def dwLdt(w,C,E,wL,warm_precip,dwidt):
+    return C-E-warm_precip-mu*wL*abs(w)-dwidt
 
 def dmdt(mu,w,m):
     return mu*np.abs(w)*m
@@ -221,7 +221,7 @@ def dmdt(mu,w,m):
 def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,wvp,wL]
     #extract values
     m,w,zp,Tp,wvp,wL=phi[0],phi[2],phi[3],phi[4],phi[5],phi[6]
-    C,E,Tenv,wvenv,dwidt=procarg[0],procarg[1],procarg[2],procarg[3],procarg[4]
+    C,E,warm_precip,Tenv,wvenv,dwidt=procarg[0],procarg[1],procarg[2],procarg[3],procarg[4],procarg[5]
 
     #do the diff eqs
     dm=dmdt(mu,w,m)*dt
@@ -230,7 +230,7 @@ def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,w
     dzp=w*dt
     dTp=dTpdt(w,Tp,Tenv,zp,C,E,dwidt)*dt
     dwvp=dwvpdt(w,wvp,wvenv,C,E)*dt
-    dwL=dwLdt(w,C,E,wL)*dt
+    dwL=dwLdt(w,C,E,wL,warm_precip,dwidt)*dt
     return np.array([dm,dp,dw,dzp,dTp,dwvp,dwL])
 
 #%% thermodynamic equilibria over water/ice surfaces
@@ -330,7 +330,7 @@ for i in range(len(t1)-1):
     mu=mu_calc(Rp[i])
     mup[i]=mu
     #Runge- Kutta numerical scheme 
-    processargs=np.array([C[i],E[i],Tenv[i],wvenv[i],dwidt])
+    processargs=np.array([C[i],E[i],warm_precip(wL[i],Tp[i]),Tenv[i],wvenv[i],dwidt])
     phi=np.array([Mp[i],p[i],w[i],zp[i],Tp[i],wvp[i],wL[i]])
     k1,k2,k3,k4=np.zeros(7),np.zeros(7),np.zeros(7),np.zeros(7)
     k1[:]=func(phi, processargs,rho)
@@ -362,14 +362,11 @@ for i in range(len(t1)-1):
     E[i+1]=evaporation(wvp[i+1],wvs,wL[i+1])
     wi[(i+1)]=Wi_depmeltfreez(Tp[i+1],p[i+1],rho,wL[i+1],dt)
     dwidt=(wi[i+1]-wi[i])/dt
-    dwi=(wi[i+1]-wi[i])
-    wL[i+1]=wL[i+1]-dwi
     
     #precipitation process of the clouds and remove the cold precip from ice parcels
     warm_prec=warm_precip(wL[i+1],Tp[i+1])
     cold_prec=cold_precip(wL[i+1],wi[i+1])
     wi[i+1]=wi[i+1]-cold_prec
-    wL[i+1]=wL[i+1]-warm_prec
     total_prec[i+1]=total_prec[i]+warm_prec+cold_prec #update total precipitation
 #integrate precipitation and divide by areal extent
 total_prec_mm=np.round(np.dot((total_prec[1:]-total_prec[:-1]),Mp[:-1])/(np.pi*Rp[-2]**2),2)    
@@ -470,9 +467,4 @@ pl.show()
 #velocity of the parcel
 pl.figure(figsize=(12,8))
 pl.plot(t1,w)
-pl.show()
-
-
-pl.figure(figsize=(12,8))
-pl.plot(wi[:]+wL[:]+wvp[:]+total_prec[:])
 pl.show()
