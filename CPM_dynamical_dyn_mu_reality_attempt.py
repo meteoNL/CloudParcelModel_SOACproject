@@ -44,10 +44,10 @@ dz=0.1
 #initial parcel characterstics
 Riniteq=2500. #initial CP radius
 parcel_bottom=150.
-ntop=0.0
+ntop=0.2
 parcel_top=parcel_bottom+ntop*Riniteq
-Tdis=0.4
-wvdis=0.2e-3
+Tdis=0.1
+wvdis=0.01e-3
 winit=0.
 
 #parameters 
@@ -62,7 +62,7 @@ wLthres=4.5e-4 # threshold for precip based on ECMWF documentation; 5e-4 in Anth
 withres=wLthres #threshold for precip form from ice
 Cconv = 10. #assumed constant for increased rate in deposition in convective clouds compared to shallow stratiform clouds
 Cinvr=0.16
-mu0=5e-5
+mu0=2e-5
 #entrainment parameterization
 def mu_calc(R):
     #this is based on reading in the provided material
@@ -76,7 +76,7 @@ i=0
 
 #%%
 #read background data from 20090526_00z_De_Bilt
-fn='20100826_12z_Essen_mod.txt'
+fn='20100826_12z_Essen.txt'
 f=open(fn,'r')
 p_d = np.array([])
 z = np.array([])
