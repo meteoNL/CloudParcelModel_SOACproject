@@ -42,11 +42,11 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Riniteq=2500. #initial CP radius
+Riniteq=3000. #initial CP radius
 parcel_bottom=150.
 ntop=0.2
 parcel_top=parcel_bottom+ntop*Riniteq
-Tdis=0.1
+Tdis=0.5
 wvdis=0.01e-3
 winit=0.
 
