@@ -4,7 +4,8 @@ Created on Mon Oct 29 12:07:08 2018
 
 @author: Chenxi, Edward
 """
-
+import matplotlib as mpl
+mpl.rcParams.update({'font.size': 21})
 import numpy as np
 import matplotlib.pyplot as pl
 radii=np.array([10.,100.,250.,500.,750.,1000.,1250.,1500.,2000.,2500.,3300.,4000.,5000.])
@@ -15,7 +16,7 @@ ax1.bar(np.log(radii),precip)#,linewidth=3.0)
 ax2=ax1.twinx()
 ax2.scatter(np.log(radii),temp,color='orange')
 pl.xticks(np.log([10.,30.,100.,300.,1000.,3000.]),np.round(np.array([10.,30.,100.,300.,1000.,3000.])))
-pl.xlim(2,8.3)
+pl.xlim(2,8.6)
 pl.title(r'Equilibrium $T_{p}$ and precipitation as function of $R_{eq}$')
 ax1.set_xlabel(r'Initial parcel $R_{eq}$ (m)')
 ax1.set_ylabel(r'Temperature (K)',color='orange')
