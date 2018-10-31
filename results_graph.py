@@ -19,6 +19,6 @@ pl.xticks(np.log([10.,30.,100.,300.,1000.,3000.]),np.round(np.array([10.,30.,100
 pl.xlim(2,8.6)
 pl.title(r'Equilibrium $T_{p}$ and precipitation as function of $R_{eq}$')
 ax1.set_xlabel(r'Initial parcel $R_{eq}$ (m)')
-ax1.set_ylabel(r'Temperature (K)',color='orange')
-ax2.set_ylabel(r'Precipitation (mm) ',color='b')
+ax2.set_ylabel(r'Temperature (K)',color='orange')
+ax1.set_ylabel(r'Precipitation (mm) ',color='b')
 pl.show()
