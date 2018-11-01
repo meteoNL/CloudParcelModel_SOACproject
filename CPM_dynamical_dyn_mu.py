@@ -28,7 +28,7 @@ rhoi = 700. #density of ice cristal, kg/m3
 #pseudoconstants
 def chi(p): #diffusivity of water vapor
     return 2.21/p
-def A(T):
+def A(T): #see Rotstayn (2000)
     return Ls(T)/Ka/T*(Ls(T)/(Rv*T)-1)
 def Lv(T):#latent heat of vaporization water
     return (2.501 - 2.361e-3*(T-T0))*1e6
@@ -36,19 +36,19 @@ def Ls(T): #latent heat of sublimation water
     return Lf+ Lv(T)
 
 #time space
-tend=18000. #end of the simulation, s
+tend=18000. #end of the simulation, s; 5 hours
 dt=0.1 #time step, s
 t1=np.linspace(0.0,tend,int(tend/dt)) 
-dz=0.1
+dz=0.1 #vertical step for pressure initiation of parcel
 
 #initial parcel characterstics
 Riniteq=4000. #initial CP radius
-parcel_bottom=150.
-ntop=0.0
+parcel_bottom=150. #initial condition
+ntop=0.0 #for parcel top; if exactly spherical n=2.0
 parcel_top=parcel_bottom+ntop*Riniteq
-Tdis=0.4
-wvdis=0.2e-3
-winit=0.
+Tdis=0.4 #temperature disturbance = initial condition
+wvdis=0.2e-3 #water vapor disturbance = initial condition
+winit=0. #initial condition vertical velocity
 
 #parameters 
 gamma=0.5 #induced relation with environmental air, inertial
@@ -65,11 +65,11 @@ Cinvr=0.16
 mu0=5e-5
 #entrainment parameterization
 def mu_calc(R):
-    #this is based on reading in the provided material
-    return Cinvr/R+mu0
-    #return 0.00
+    #this is based on reading in the Pruppacher & Klett, 2010, chapter 12
+    return Cinvr/R+mu0 #to switch off if no entrainment
+    #return 0.00 #to switch on if no entrainment
 
-#profile drying constants , 1.00 in any layer means no drying and zint is the interface between the first and second layer
+#profile drying constants experiment , 1.00 in any layer means no drying and zint is the interface between the first and second layer
 Cdry=np.array([1.00,1.00])
 zint=2000.0
 i=0
@@ -187,7 +187,8 @@ def meanenvcalc(bottom,top,name):
         elif name=='wvenv':
             values[i]=wvenvcalc(levels[i])
     return np.mean(values)
-    
+
+#put initial conditions provided above in arrays of result values    
 zp[0] = parcel_bottom+0.5*(parcel_top-parcel_bottom) #initial height of parcel, m
 Tp[0] = meanenvcalc(parcel_bottom,parcel_top,'Tenv')+Tdis #initial temperature of parcel, K
 w[0] = winit #initial velocity of parcel, m/s
@@ -234,8 +235,8 @@ def func(phi,procarg,rho):#C,E,warm_precip,rho,Tenv,wvenv,t):#phi = [p,w,zp,Tp,w
     return np.array([dm,dp,dw,dzp,dTp,dwvp,dwL])
 
 #%% thermodynamic equilibria over water/ice surfaces
+#equations from lecture notes by Van Delden (2017/2018) retrieved from http://www.staff.science.uu.nl/~delde102/dynmeteorology.htm; fromUniversity of North Carolina lecuture slides retrieved from http://www.atms.unca.edu/cgodfrey/courses/atms320/ppt/hygrometry.pdf and Wallace and Hobbs (2006)
 def escalc(T):
-    #from Aarnouts lecture notes and Wallace and Hobbs
     diffT=(1./T0-1./T)
     difflnes=Lv(T)/Rv*diffT
     lnes=difflnes+np.log(es0)
@@ -243,13 +244,11 @@ def escalc(T):
     return es
 
 def wvscalc(T,p):#calculation of water vapor saturation mixing ratio
-    #from Aarnouts lecture notes and Wallace and Hobbs
     es=escalc(T)
     wvsat=epsilon*(es/(p-es))
     return wvsat
 
 def esicalc(T,p):#calculation of water vapor saturation mixing ratio
-    #fromUniversity of North Carolina lecuture slides
     diffT=(1./T1-1./T)
     difflnesi=Ls(T)/Rv*diffT
     lnesi=difflnesi+np.log(es1)
@@ -257,7 +256,6 @@ def esicalc(T,p):#calculation of water vapor saturation mixing ratio
     return esi
 
 def Tvcalc(T,wv):
-    #virtual temp, from Aarnouts lecture notes
     return T*(1+(wv)/epsilon)/(1+wv)
 
 #%%
@@ -274,7 +272,7 @@ def evaporation(wv,wvs,wL):
     else:
         return 0.00
 
-#deposition of cloud water to solid phase
+#deposition of cloud water to solid phase: Rotstayn et al 2000, multiplied by Cconv
 def B(T,p):
     return Rv*T*chi(p)*esicalc(T,p)    
 def Ni(T,p):
@@ -318,14 +316,14 @@ C[0] = condensation(wvp[0],wvscalc(Tp[0],p[0]))
 E[0] = evaporation(wvp[0],wvscalc(Tp[0],p[0]),0)
 Rp[0] = Riniteq
 mup[0] = mu_calc(Rp[0])
-Tv = Tvcalc(Tp[0],wvp[0])#*(1+(wvp[0])/epsilon)/(1+wvp[0]) #virtual temp, from Aarnouts lecture note
-rho = p[0]/(Rd*Tv) #gas law
+Tv = Tvcalc(Tp[0],wvp[0])
+rho = p[0]/(Rd*Tv) #ideal gas law
 Mp[0] = (4./3*Rp[0]**3)*rho
 dwidt=0.
 for i in range(len(t1)-1): 
     #do the gass law and hydrostatic equilibrium to calculate pressure and saturation
-    Tv = Tvcalc(Tp[i],wvp[i])# Tp[i]*(1+(wvp[i])/epsilon)/(1+wvp[i]) #virtual temp, from Aarnouts lecture notes
-    rho = p[i]/(Rd*Tv) #gas law
+    Tv = Tvcalc(Tp[i],wvp[i])
+    rho = p[i]/(Rd*Tv) #ideal gas law
     Rp[i]=(3./4*Mp[i]/rho)**(1./3)
     mu=mu_calc(Rp[i])
     mup[i]=mu
@@ -378,7 +376,7 @@ total_prec_mm=np.round(np.dot((total_prec[1:]-total_prec[:-1]),Mp[:-1])/(np.pi*R
 Tgamma=0.0050 #skew T visualzation constant
 
 def Tdew(T,wv,p):
-    #approximate dew point calculation from http://irtfweb.ifa.hawaii.edu/~tcs3/tcs3/Misc/Dewpoint_Calculation_Humidity_Sensor_E.pdf
+    #approximate dew point working above -50 degrees C, calculation retrieved from http://irtfweb.ifa.hawaii.edu/~tcs3/tcs3/Misc/Dewpoint_Calculation_Humidity_Sensor_E.pdf
     Tdew=np.ones(len(T))
     wvsloc=wvscalc((T+T0),p)
     
@@ -421,6 +419,7 @@ pl.ylabel('Cumulative precipitation mixing ratio (g/g)')
 pl.grid()
 maxaxis=np.round(0.5+1000*total_prec[-1]*1.2,0)/1000.
 pl.ylim(0,maxaxis)
+pl.xlim(0,np.max(t1))
 pl.text(0,-.16*maxaxis,'Areal mean total precipitation: '+str(total_prec_mm)+' mm')
 pl.show()
 
@@ -455,24 +454,15 @@ pl.xlim(0,np.max(t1))
 pl.grid()
 pl.show()
 
-#height evolution of parcel
-pl.figure(figsize=(12,8))
-pl.plot(t1,zp,label='Model parcel height')
-pl.plot(t1,(zp-Rp),label='Pseudo-bottom model parcel')
-pl.plot(t1,(zp+Rp),label='Pseudo-top model parcel')
-pl.legend()
-pl.title('Cloud parcels\' path ')
-pl.xlabel('Time (s)')
-pl.ylabel('z (m)')
-pl.ylim(0,16000)    
-pl.show()
-
 #velocity of the parcel
 pl.figure(figsize=(12,8))
+pl.title('Vertical velocity evolution')
 pl.plot(t1,w)
-pl.show()
-
-
-pl.figure(figsize=(12,8))
-pl.plot(wi[:]+wL[:]+wvp[:]+total_prec[:])
+pl.xlabel('time (s)')
+pl.ylabel('w (m/s)')
+pl.xlim(0,np.max(t1))
+maxvel=np.round(1.1*np.max(np.abs(w))+0.5)
+pl.ylim(-maxvel,maxvel)
+pl.text(0,-1.36*maxvel,r'Effective maximum kinetic energy: '+str(np.round(0.5*np.max(w**2),1))+' m$^2$/s$^2$')
+pl.grid()
 pl.show()

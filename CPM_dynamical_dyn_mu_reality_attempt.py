@@ -25,6 +25,11 @@ epsilon=0.622 #molar mass ratio water and dry air
 Ka = 2.4e-2 #Thermal conductivity of air
 rhoi = 700. #density of ice cristal, kg/m3
 
+
+def Tvcalc(T,wv):
+    #virtual temp, from Aarnouts lecture notes
+    return T*(1+(wv)/epsilon)/(1+wv)
+
 #pseudoconstants
 def chi(p): #diffusivity of water vapor
     return 2.21/p
@@ -42,7 +47,7 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1
 
 #initial parcel characterstics
-Riniteq=3000. #initial CP radius
+Riniteq=1000. #initial CP radius
 parcel_bottom=150.
 ntop=0.2
 parcel_top=parcel_bottom+ntop*Riniteq
