@@ -42,7 +42,7 @@ t1=np.linspace(0.0,tend,int(tend/dt))
 dz=0.1 #vertical step for pressure initiation of parcel
 
 #initial parcel characterstics
-Riniteq=4000. #initial CP radius
+Riniteq=2500. #initial CP radius
 parcel_bottom=150. #initial condition
 ntop=0.0 #for parcel top; if exactly spherical n=2.0
 parcel_top=parcel_bottom+ntop*Riniteq
