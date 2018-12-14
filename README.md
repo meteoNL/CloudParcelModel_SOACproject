@@ -7,4 +7,4 @@ The .py-file with "reality_attempt" in the title is supposed to represent a real
 The figure_results subdirectory contain some results that can be produced by the model, for which model settings can also be found in the report. 
 The phase diagram of the cloud can also be found in a file with this name. 
 
-This cloud parcel model was created for the course "Simulation of Ocean, Atmosphere and Climate" at Utrecht University and we (Chenxi Qiu, Edward Groot) were supervised by Willem Jan van de Berg.
+This cloud parcel model was created for the course "Simulation of Ocean, Atmosphere and Climate" at Utrecht University in Oktober and November 2018 and we (Chenxi Qiu, Edward Groot) were supervised by Willem Jan van de Berg.
